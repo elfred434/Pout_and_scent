@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial; color: #333;">
+  <h2>Statut de votre commande</h2>
+  <p>Bonjour {{ commande.user.full_name }},</p>
+  <p>Le statut de votre commande <strong>#{{ commande.id|truncatechars:16 }}</strong> a changé.</p>
+  <p><strong>Nouveau statut :</strong> {{ commande.get_statut_display }}</p>
+  <p>L'équipe Pout & Scent</p>
+</body>
+</html>
