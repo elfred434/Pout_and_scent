@@ -2,7 +2,6 @@ import logging
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-
 from .models import CanalEmail, EmailLog, StatutEnvoi
 
 logger = logging.getLogger(__name__)
@@ -11,6 +10,7 @@ logger = logging.getLogger(__name__)
 class EmailService:
     @staticmethod
     def _send(user, canal: str, destinataire: str, sujet: str, template: str, context: dict):
+        """Envoie un email et log l'opération."""
         try:
             html = render_to_string(f"emails/{template}.html", context)
             msg = EmailMultiAlternatives(
@@ -95,4 +95,15 @@ class EmailService:
             sujet="Réinitialisation de votre mot de passe",
             template="reset_password",
             context={"reset_url": reset_url},
+        )
+
+    @classmethod
+    def envoi_alerte_stock_faible(cls, admin, variants):
+        cls._send(
+            user=admin,
+            canal=CanalEmail.LOW_STOCK,
+            destinataire=admin.email,
+            sujet="⚠️ Alerte stock faible - Pout & Scent",
+            template="low_stock_alert",
+            context={"admin": admin, "variants": variants},
         )

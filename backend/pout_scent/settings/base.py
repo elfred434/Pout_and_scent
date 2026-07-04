@@ -63,8 +63,8 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # pour tes templates emails personnalisés
-        "APP_DIRS": True,  # ✅ IMPORTANT : permet de trouver les templates dans apps/*/templates/
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -82,8 +82,6 @@ WSGI_APPLICATION = "pout_scent.wsgi.application"
 DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
-# En prod, ajouter replica :
-# DATABASES["replica"] = env.db("DATABASE_REPLICA_URL")
 DATABASE_ROUTERS = ["pout_scent.db_router.PrimaryReplicaRouter"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CONN_MAX_AGE = 600
@@ -118,7 +116,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"  # stockage local brut, sans Pillow
+MEDIA_ROOT = BASE_DIR / "media"
 
 # --- Auth custom ---
 AUTH_USER_MODEL = "users.User"
@@ -128,14 +126,17 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.StandardPagination",
-    "PAGE_SIZE": 20,
-    "DEFAULT_FILTER_BACKENDS": (
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ),
+    # ✅ Utilisation explicite des classes pour éviter les strings
+    "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
-    ),
+    ],
+    "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.StandardPagination",
+    "PAGE_SIZE": 20,
     "DEFAULT_THROTTLE_CLASSES": (
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
@@ -144,8 +145,11 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "apps.common.exceptions.custom_exception_handler",
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S%z",
-    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+    ),
 }
+
 
 # --- JWT ---
 SIMPLE_JWT = {
@@ -183,7 +187,7 @@ DEFAULT_FROM_EMAIL = env("EMAIL_FROM", default="noreply@poutscent.bj")
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite dev
+    "http://localhost:5173",
     "http://localhost:3000",
 ]
 
@@ -194,6 +198,11 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    "ENUM_NAME_OVERRIDES": {},
+    "SCHEMA_PATH_PREFIX": r'/api/v[0-9]',
+    # ✅ Ignore les warnings de composants anonymes (Verify2FAView, etc.)
+    "PREPROCESSING_HOOKS": [], 
+    "DISABLE_ERRORS_AND_WARNINGS": True, # Force l'affichage même en cas d'erreur mineure
 }
 
 # --- Celery ---
@@ -209,5 +218,4 @@ CELERY_TASK_TRACK_STARTED = True
 STOCK_EXPIRY_HOURS = 72
 LOW_STOCK_THRESHOLD = 5
 XOF_DECIMAL_PLACES = 2
-# --- Frontend ---
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")

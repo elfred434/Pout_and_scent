@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Alerte stock faible</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #ffc107;">⚠️ Alerte stock faible</h2>
+        <p>Bonjour {{ admin.full_name }},</p>
+        <p>Les variantes suivantes ont un stock critique :</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="padding: 10px; border: 1px solid #ddd;">Produit</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Contenance</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for variant in variants %}
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ variant.produit.nom }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">{{ variant.contenance_ml }}ml</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; color: #dc3545; font-weight: bold;">{{ variant.stock }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <p>Cordialement,<br>Système Pout & Scent</p>
+    </div>
+</body>
+</html>
