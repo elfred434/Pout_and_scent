@@ -9,7 +9,7 @@ from .views_auth import (
     RegisterView,
     Verify2FAView,
 )
-
+from .views_google import GoogleAuthView  
 urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
     path("login/", LoginView.as_view(), name="login"),
@@ -19,4 +19,5 @@ urlpatterns = [
     path("me/", MeView.as_view(), name="me"),
     path("password/reset/", PasswordResetRequestView.as_view(), name="password_reset"),
     path("password/reset/confirm/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
+    path("google/", GoogleAuthView.as_view(), name="google_auth"),
 ]

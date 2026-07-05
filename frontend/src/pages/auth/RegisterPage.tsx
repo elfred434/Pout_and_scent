@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google'; // ✅ REMPLACER useGoogleLogin
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -8,7 +9,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { register, isAuthenticated } = useAuth();
+  const { register, googleLogin, isAuthenticated } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -20,30 +21,50 @@ export function RegisterPage() {
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [globalError, setGlobalError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  // Si déjà connecté, rediriger
   if (isAuthenticated) {
     navigate('/', { replace: true });
     return null;
   }
 
+  // ✅ Handler pour Google Login (composant)
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setGlobalError('');
+      console.log('✅ Google credential received');
+      
+      await googleLogin.mutateAsync({
+        credential: credentialResponse.credential,
+      });
+      
+      navigate('/');
+    } catch (err: any) {
+      console.error('❌ Google login error:', err);
+      setGlobalError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Erreur lors de la connexion avec Google'
+      );
+    }
+  };
+
+  const handleGoogleError = () => {
+    console.error('❌ Google Login Failed');
+    setGlobalError('Erreur lors de la connexion avec Google');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     setGlobalError('');
-    setLoading(true);
 
-    // Validation côté client
     if (formData.password !== formData.password_confirm) {
       setErrors({ password_confirm: ['Les mots de passe ne correspondent pas'] });
-      setLoading(false);
       return;
     }
 
     if (formData.password.length < 10) {
       setErrors({ password: ['Le mot de passe doit contenir au moins 10 caractères'] });
-      setLoading(false);
       return;
     }
 
@@ -53,13 +74,10 @@ export function RegisterPage() {
     } catch (error: any) {
       console.error('Register error:', error);
 
-      // Le backend renvoie {success: false, error: {...}}
       if (error.response?.data) {
         const errorData = error.response.data;
 
-        // Si c'est la structure custom du backend
         if (errorData.error) {
-          // error.error peut être un objet avec des tableaux de messages
           const formattedErrors: Record<string, string[]> = {};
           
           if (typeof errorData.error === 'object') {
@@ -76,7 +94,6 @@ export function RegisterPage() {
           
           setErrors(formattedErrors);
         } else {
-          // Structure DRF standard
           const formattedErrors: Record<string, string[]> = {};
           Object.entries(errorData).forEach(([key, value]) => {
             if (Array.isArray(value)) {
@@ -92,8 +109,6 @@ export function RegisterPage() {
       } else {
         setGlobalError('Une erreur est survenue lors de l\'inscription');
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -115,13 +130,40 @@ export function RegisterPage() {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {globalError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {globalError}
-            </div>
-          )}
+        {/* ✅ ERREUR GLOBALE */}
+        {globalError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {globalError}
+          </div>
+        )}
 
+        {/* ✅ COMPOSANT Google Login */}
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="large"
+            text="signup_with"
+            shape="rectangular"
+            // width="100%"
+            locale="fr"
+          />
+        </div>
+
+        {/* Séparateur */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gray-50 text-gray-500">
+              Ou avec email
+            </span>
+          </div>
+        </div>
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <Input
               label="Prénom"
@@ -168,8 +210,8 @@ export function RegisterPage() {
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? (
+          <Button type="submit" disabled={register.isPending} className="w-full">
+            {register.isPending ? (
               <>
                 <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
                 Inscription...

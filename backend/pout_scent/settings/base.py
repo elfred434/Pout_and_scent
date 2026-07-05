@@ -214,6 +214,28 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 
+# Google OAuth
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+
+# allauth configuration
+SITE_ID = 1
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
+
+# Providers
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': env("GOOGLE_CLIENT_ID", default=""),
+            'secret': env("GOOGLE_CLIENT_SECRET", default=""),
+        },
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}
 # --- Métier ---
 STOCK_EXPIRY_HOURS = 72
 LOW_STOCK_THRESHOLD = 5

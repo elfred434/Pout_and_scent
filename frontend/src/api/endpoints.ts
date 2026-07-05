@@ -51,6 +51,9 @@ export const authEndpoints = {
     password: string;
     password_confirm: string;
   }) => apiClient.post('/auth/password/reset/confirm/', data),
+
+  googleAuth: (data: { credential: string }) =>
+    apiClient.post('/auth/google/', data),
 };
 
 // Catalogue

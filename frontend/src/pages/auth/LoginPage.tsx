@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google'; // ✅ REMPLACER useGoogleLogin
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -10,25 +11,48 @@ import { getRememberMe } from '@/lib/authStorage';
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuth();
+  const { login, googleLogin, isAuthenticated } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
-  // ✅ État "Se souvenir de moi" (défaut: true)
   const [rememberMe, setRememberMe] = useState(getRememberMe());
   const [error, setError] = useState('');
 
-  // Redirection après login
   const from = (location.state as any)?.from?.pathname || '/';
 
-  // Si déjà connecté, rediriger
   if (isAuthenticated) {
     navigate(from, { replace: true });
     return null;
   }
+
+  // ✅ Handler pour Google Login (composant)
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setError('');
+      console.log('✅ Google credential received');
+      
+      await googleLogin.mutateAsync({
+        credential: credentialResponse.credential, // ✅ ID token JWT
+      });
+      
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      console.error('❌ Google login error:', err);
+      setError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Erreur lors de la connexion avec Google'
+      );
+    }
+  };
+
+  const handleGoogleError = () => {
+    console.error('❌ Google Login Failed');
+    setError('Erreur lors de la connexion avec Google');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,22 +61,18 @@ export function LoginPage() {
     try {
       const response = await login.mutateAsync({
         ...formData,
-        rememberMe, // ✅ Passer le choix
+        rememberMe,
       });
 
-      // ✅ Vérifier si le backend demande le 2FA
       if (response.requires_2fa && response.temp_token) {
-        console.log('🔐 2FA required, redirecting...');
         navigate(`/2fa?temp_token=${response.temp_token}&remember=${rememberMe}`);
         return;
       }
 
-      // Sinon, login réussi
       navigate(from, { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
 
-      // Gestion des erreurs
       if (err.response?.data) {
         const errorData = err.response.data;
         if (errorData.error) {
@@ -94,13 +114,40 @@ export function LoginPage() {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
+        {/* ✅ ERREUR */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
 
+        {/* ✅ COMPOSANT Google Login (remplace le bouton custom) */}
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="large"
+            text="signin_with"
+            shape="rectangular"
+            width="100%"
+            locale="fr"
+          />
+        </div>
+
+        {/* Séparateur */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gray-50 text-gray-500">
+              Ou avec email
+            </span>
+          </div>
+        </div>
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <Input
               label="Email"
@@ -121,7 +168,6 @@ export function LoginPage() {
           </div>
 
           <div className="flex items-center justify-between">
-            {/* ✅ Checkbox "Se souvenir de moi" fonctionnelle */}
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
