@@ -1,5 +1,6 @@
 // ============================================================
 // APP — Point d'entrée React avec Google OAuth Provider
+// Cohérence: react-router-dom unique (suppression tanstack router)
 // ============================================================
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import { CatalogPage } from '@/pages/catalog/CatalogPage';
 import { ProductDetailPage } from '@/pages/catalog/ProductDetailPage';
 import { CartPage } from '@/pages/cart/CartPage';
 import { CheckoutPage } from '@/pages/checkout/CheckoutPage';
+import { OrderSuccessPage } from '@/pages/checkout/OrderSuccessPage';
 
 // Pages auth
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -34,14 +36,12 @@ import { AddressesPage } from '@/pages/user/AddressesPage';
 import { OrdersPage } from '@/pages/user/OrdersPage';
 import { SecurityPage } from '@/pages/user/SecurityPage';
 
-// ✅ Récupérer le Google Client ID depuis les variables d'environnement
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 export function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        {/* ✅ GoogleOAuthProvider enveloppe tout l'app */}
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
           <BrowserRouter
             future={{
@@ -58,6 +58,7 @@ export function App() {
                   <Route path="/produit/:id" element={<ProductDetailPage />} />
                   <Route path="/panier" element={<CartPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/commande/success" element={<OrderSuccessPage />} />
 
                   {/* Routes auth */}
                   <Route path="/connexion" element={<LoginPage />} />

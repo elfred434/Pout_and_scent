@@ -1,9 +1,11 @@
+import logging
 from celery import shared_task
 from django.utils import timezone
 from .models import Commande, StatutCommande
 from .services import StockService, CommandeTransitionService
 from apps.notifications.services import EmailService
 
+logger = logging.getLogger(__name__)
 
 @shared_task
 def expire_unpaid_orders():
@@ -40,6 +42,9 @@ def check_low_stock():
     if low_stock_variants.exists():
         admins = User.objects.filter(role="ADMIN", is_active=True)
         for admin in admins:
-            EmailService.envoi_alerte_stock_faible(admin, low_stock_variants)
+            try:
+                EmailService.envoi_alerte_stock_faible(admin, low_stock_variants)
+            except Exception as e:
+                logger.error(f"Erreur alerte stock faible pour admin {admin.id}: {e}")
     
     return f"{low_stock_variants.count()} variante(s) en stock faible"

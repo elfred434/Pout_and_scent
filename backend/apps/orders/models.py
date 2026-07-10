@@ -80,7 +80,7 @@ class LigneCommande(BaseModel):
     sous_total = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
-        constraints = [models.CheckConstraint(check=models.Q(quantite__gt=0), name="quantite_positif")]
+        constraints = [models.CheckConstraint(condition=models.Q(quantite__gt=0), name="quantite_positif")]
 
     def __str__(self):
         return f"{self.quantite}x {self.variante}"

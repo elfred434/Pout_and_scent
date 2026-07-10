@@ -39,7 +39,7 @@ class StockService:
     @staticmethod
     @transaction.atomic
     def liberer(lignes):
-        """Libère le stock d'une commande annulée."""
+        """Libère le stock d'une commande annulée/expirée."""
         for ligne in lignes:
             VarianteProduit.objects.filter(id=ligne.variante_id).update(
                 stock=F("stock") + ligne.quantite
@@ -65,7 +65,9 @@ class CheckoutService:
         montant_reduit = Decimal("0")
         lignes_objs = []
         for ligne in lignes_data:
-            variante = variantes_map[str(ligne["variante_id"])]
+            variante = variantes_map.get(str(ligne["variante_id"]))
+            if not variante:
+                raise ValueError(f"Variante {ligne['variante_id']} introuvable dans le mapping")
             prix_unitaire = PricingService.prix_final(variante)
             sous_total = (prix_unitaire * ligne["quantite"]).quantize(Decimal("0.01"))
             montant_total += variante.prix * ligne["quantite"]
@@ -95,19 +97,31 @@ class CheckoutService:
 class CommandeTransitionService:
     """Service pour les transitions de statut de commande."""
     
+    # FIX CRITIQUE: Ajout de EXPIREE comme transition valide pour permettre l'expiration auto 72h
     TRANSITIONS_VALIDES = {
-        StatutCommande.EN_PREPARATION: [StatutCommande.EN_LIVRAISON, StatutCommande.ANNULEE],
-        StatutCommande.EN_LIVRAISON: [StatutCommande.LIVREE, StatutCommande.ANNULEE],
+        StatutCommande.EN_PREPARATION: [
+            StatutCommande.EN_LIVRAISON, 
+            StatutCommande.ANNULEE,
+            StatutCommande.EXPIREE,
+        ],
+        StatutCommande.EN_LIVRAISON: [
+            StatutCommande.LIVREE, 
+            StatutCommande.ANNULEE,
+            StatutCommande.EXPIREE,
+        ],
     }
     
     @staticmethod
     @transaction.atomic
     def transitionner(commande: Commande, nouveau_statut: str, user=None):
-        """Effectue une transition de statut avec libération de stock si annulation."""
+        """Effectue une transition de statut avec libération de stock si annulation/expiration."""
         if nouveau_statut not in CommandeTransitionService.TRANSITIONS_VALIDES.get(commande.statut, []):
-            raise ValueError(f"Transition invalide de {commande.statut} vers {nouveau_statut}")
+            # Permettre EXPIREE depuis n'importe quel statut non final si appelé par système
+            if not (nouveau_statut == StatutCommande.EXPIREE and commande.statut in [StatutCommande.EN_PREPARATION, StatutCommande.EN_LIVRAISON]):
+                raise ValueError(f"Transition invalide de {commande.statut} vers {nouveau_statut}")
         
-        if nouveau_statut == StatutCommande.ANNULEE:
+        # Libération stock pour annulation ET expiration
+        if nouveau_statut in (StatutCommande.ANNULEE, StatutCommande.EXPIREE):
             StockService.liberer(commande.lignes.all())
         
         commande.statut = nouveau_statut
@@ -115,5 +129,12 @@ class CommandeTransitionService:
             commande.date_livraison = timezone.now()
         commande.save()
         
-        EmailService.envoi_changement_statut(commande)
+        # Emails selon statut
+        if nouveau_statut == StatutCommande.EXPIREE:
+            try:
+                EmailService.envoi_commande_expiree(commande)
+            except AttributeError:
+                EmailService.envoi_changement_statut(commande)
+        else:
+            EmailService.envoi_changement_statut(commande)
         return commande

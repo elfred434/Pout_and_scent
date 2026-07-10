@@ -41,4 +41,13 @@ staticfiles/
 media/
 
 # Vite
-frontend/node_modules/.vite/
+frontend/node_modules/.vite/# fix critiques
+rapport.txt
+**/rapport.txt
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+frontend/src/pages/auth/*.png
+frontend/src/pages/auth/screenshot-*
+frontend/dist/
+frontend/src/router.tsx

@@ -142,7 +142,7 @@ class ProduitImage(TimeStampedModel):
 class VarianteProduit(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE, related_name="variantes")
-    contenance_ml = models.PositiveBigIntegerField(verbose_name="Contenance (ml)")
+    contenance_ml = models.PositiveIntegerField(verbose_name="Contenance (ml)")
     prix = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix (XOF)")
     stock = models.IntegerField(default=0)
     sku = models.CharField(max_length=80, unique=True, blank=True)  # ← AJOUTER blank=True
@@ -170,7 +170,7 @@ class VarianteProduit(TimeStampedModel):
         verbose_name_plural = "Variantes"
         constraints = [
             models.UniqueConstraint(fields=["produit", "contenance_ml"], name="unique_contenance_par_produit"),
-            models.CheckConstraint(check=models.Q(stock__gte=0), name="stock_positif"),
+            models.CheckConstraint(condition=models.Q(stock__gte=0), name="stock_positif"),
         ]
         indexes = [models.Index(fields=["produit", "is_active"])]
 

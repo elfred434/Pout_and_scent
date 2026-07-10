@@ -17,7 +17,7 @@ class Avis(BaseModel):  # ✅ CHANGÉ : BaseModel
         verbose_name_plural = "Avis"  # ✅ ESPACE SUPPRIMÉ
         constraints = [
             models.UniqueConstraint(fields=["produit", "user"], name="un_avis_par_user_produit"),  # ✅ ESPACE SUPPRIMÉ
-            models.CheckConstraint(check=models.Q(note__gte=1, note__lte=5), name="note_entre_1_et_5"),  # ✅ ESPACE SUPPRIMÉ
+            models.CheckConstraint(condition=models.Q(note__gte=1, note__lte=5), name="note_entre_1_et_5"),  # ✅ ESPACE SUPPRIMÉ
         ]
         indexes = [models.Index(fields=["produit", "is_visible"])]
 
