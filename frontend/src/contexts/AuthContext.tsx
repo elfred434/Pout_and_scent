@@ -1,7 +1,9 @@
+// ============================================================
+// AUTH CONTEXT — Gestion de l'authentification
+// ============================================================
 import { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useMutation, UseMutationResult } from '@tanstack/react-query';
-import { authEndpoints } from '@/api/endpoints';
-import type { User, LoginPayload, RegisterPayload, LoginResponse } from '@/types';
+import { authEndpoints, LoginResponse, LoginPayload, RegisterPayload, User } from '@/api/endpoints';
 import { useNavigate } from 'react-router-dom';
 import { setTokens, clearTokens, getAccessToken, getRememberMe } from '@/lib/authStorage';
 
@@ -10,7 +12,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: UseMutationResult<LoginResponse, Error, LoginPayload & { rememberMe?: boolean }>;
-  register: UseMutationResult<any, Error, RegisterPayload>;
+  register: UseMutationResult<LoginResponse, Error, RegisterPayload>;
+  googleLogin: UseMutationResult<LoginResponse, Error, { credential: string }>;
   logout: () => void;
 }
 
@@ -24,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ['user'],
     queryFn: () => authEndpoints.me().then((res) => res.data),
     retry: false,
-    enabled: !!getAccessToken(), // ✅ Utiliser le helper
+    enabled: !!getAccessToken(),
   });
 
   // ✅ Login avec gestion du 2FA et "Se souvenir de moi"
@@ -37,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Si le backend demande le 2FA, ne pas stocker les tokens
       if (response.requires_2fa) {
         console.log('🔐 2FA required');
-        return; // Le LoginPage gérera la redirection
+        return;
       }
 
       // Stocker les tokens selon le choix "Se souvenir de moi"
@@ -45,26 +48,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (tokens.access && tokens.refresh) {
         const rememberMe = variables.rememberMe ?? getRememberMe();
         setTokens(tokens.access, tokens.refresh, rememberMe);
-        console.log(`✅ Login successful, tokens stored (${rememberMe ? 'localStorage' : 'sessionStorage'})`);
+        console.log(`✅ Login successful (${rememberMe ? 'localStorage' : 'sessionStorage'})`);
       }
     },
   });
 
-  const register = useMutation({
-    mutationFn: (data: RegisterPayload) =>
+  // ✅ Register
+  const register = useMutation<LoginResponse, Error, RegisterPayload>({
+    mutationFn: (data) =>
       authEndpoints.register(data).then((res) => res.data),
     onSuccess: (response) => {
-      // Par défaut, on persiste pour l'inscription
       const tokens = response.data || response;
       if (tokens.access && tokens.refresh) {
         setTokens(tokens.access, tokens.refresh, true);
-        console.log('✅ Register successful, tokens stored (localStorage)');
+        console.log('✅ Register successful');
       }
     },
   });
 
+  // ✅ Google OAuth
+  const googleLogin = useMutation<LoginResponse, Error, { credential: string }>({
+    mutationFn: (data) =>
+      authEndpoints.googleAuth(data).then((res) => res.data),
+    onSuccess: (response) => {
+      const tokens = response.data || response;
+      if (tokens.access && tokens.refresh) {
+        // Toujours persister pour Google OAuth
+        setTokens(tokens.access, tokens.refresh, true);
+        console.log('✅ Google login successful');
+      }
+    },
+    onError: (error) => {
+      console.error('❌ Google login error:', error);
+    },
+  });
+
+  // ✅ Logout
   const logout = () => {
-    clearTokens(); // ✅ Supprime des deux stockages
+    clearTokens();
     navigate('/');
     window.location.reload();
   };
@@ -75,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     login,
     register,
+    googleLogin,
     logout,
   };
 

@@ -1,2 +1,21 @@
+# Base requirements
 -r base.txt
-sentry-sdk==2.19.2
+
+# Serveur WSGI production
+gunicorn==22.0.0
+
+# PostgreSQL
+psycopg2-binary==2.9.9
+
+# Fichiers statiques
+whitenoise[brotli]==6.7.0
+
+# CORS
+django-cors-headers==4.4.0
+
+# Stockage médias cloud
+django-cloudinary-storage==0.13.1
+cloudinary==1.41.0
+
+# Variables d'environnement
+django-environ==0.11.2
