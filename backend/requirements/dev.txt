@@ -1,6 +1,17 @@
+# ============================================================
+# Dépendances de développement
+# ============================================================
 -r base.txt
+
+# Debug
+django-debug-toolbar==4.4.6
+
+# Testing
 pytest==8.3.4
 pytest-django==4.9.0
-pytest-cov==6.0.0
 factory-boy==3.3.1
-django-debug-toolbar==4.4.6
+coverage==7.6.9
+
+# Dev tools
+ipython==8.31.0
+flake8==7.1.1

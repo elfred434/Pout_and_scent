@@ -1,13 +1,14 @@
 // ============================================================
-// PRODUCT DETAIL PAGE — Page détail produit
+// PRODUCT DETAIL PAGE — Page détail produit avec support promo
 // ============================================================
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProduct } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
+import { useProductPromotion, calculerPrixPromo } from '@/hooks/usePromotions';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/common/Button';
-import { ShoppingCart, Check, Star, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Check, Star, ArrowLeft, Tag, Clock } from 'lucide-react';
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,21 +20,28 @@ export function ProductDetailPage() {
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
 
-  // ✅ VÉRIFICATIONS DE SÉCURITÉ
   const variantes = product?.variantes || [];
   const images = product?.images || [];
 
   const variante = variantes.find((v) => v.id === selectedVariante) || variantes[0];
 
+  // Promotion active pour ce produit
+  const promo = useProductPromotion(product?.id, product?.categorie?.id);
+  const prixVariante = variante ? parseFloat(variante.prix) : 0;
+  const prixPromo = calculerPrixPromo(prixVariante, promo);
+
   const handleAddToCart = () => {
     if (!product || !variante) return;
+
+    // Utiliser le prix promo si disponible
+    const prixFinal = prixPromo ? prixPromo.prixFinal : parseFloat(variante.prix);
 
     addItem({
       variante_id: variante.id,
       produit_nom: product.nom,
       produit_marque: product.marque,
       contenance_ml: variante.contenance_ml,
-      prix: parseFloat(variante.prix),
+      prix: prixFinal,
       quantite,
       image_url: images[0]?.image || images[0]?.url,
     });
@@ -187,11 +195,49 @@ export function ProductDetailPage() {
           {/* Price & Stock */}
           {variante && (
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-gray-900">
-                  {parseFloat(variante.prix).toLocaleString('fr-FR')}
-                </span>
-                <span className="text-gray-600">FCFA</span>
+              {/* Bannière promo */}
+              {prixPromo && promo && (
+                <div className="mb-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-2 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4" />
+                    <span className="font-bold">
+                      {promo.type === 'POURCENTAGE'
+                        ? `-${promo.valeur}%`
+                        : `-${parseInt(promo.valeur).toLocaleString('fr-FR')} FCFA`}
+                    </span>
+                    <span className="text-sm opacity-90">{promo.nom}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs opacity-80">
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      Jusqu'au {new Date(promo.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-baseline gap-3">
+                {prixPromo ? (
+                  <>
+                    <span className="text-3xl font-bold text-pink-600">
+                      {prixPromo.prixFinal.toLocaleString('fr-FR')}
+                    </span>
+                    <span className="text-gray-600">FCFA</span>
+                    <span className="text-lg text-gray-400 line-through">
+                      {prixVariante.toLocaleString('fr-FR')} FCFA
+                    </span>
+                    <span className="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                      Économisez {prixPromo.reduction.toLocaleString('fr-FR')} FCFA
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-3xl font-bold text-gray-900">
+                      {prixVariante.toLocaleString('fr-FR')}
+                    </span>
+                    <span className="text-gray-600">FCFA</span>
+                  </>
+                )}
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 Stock: {variante.stock} unité(s)
@@ -241,6 +287,77 @@ export function ProductDetailPage() {
               </Button>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ─── SECTION RÉGLEMENTAIRE ABMed (Arrêté du 18/01/2022) ─── */}
+      <div className="mt-12 border-t pt-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          📋 Informations réglementaires
+        </h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="font-medium text-gray-900 mb-3">Conformité ABMed</h3>
+            <dl className="space-y-2 text-sm">
+              {product.amm_number ? (
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">N° AMM :</dt>
+                  <dd className="font-medium text-green-700">✅ {product.amm_number}</dd>
+                </div>
+              ) : (
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">N° AMM :</dt>
+                  <dd className="text-yellow-700">⚠️ Non renseigné</dd>
+                </div>
+              )}
+              {product.pays_origine && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">Pays d'origine :</dt>
+                  <dd className="font-medium">{product.pays_origine}</dd>
+                </div>
+              )}
+              {product.numero_lot && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">N° de lot :</dt>
+                  <dd className="font-medium">{product.numero_lot}</dd>
+                </div>
+              )}
+              {product.date_peremption && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">Date de péremption :</dt>
+                  <dd className="font-medium">
+                    {new Date(product.date_peremption).toLocaleDateString('fr-FR', {
+                      year: 'numeric', month: 'long', day: 'numeric',
+                    })}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+
+          {product.liste_inci && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium text-gray-900 mb-3">
+                Ingrédients (INCI)
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {product.liste_inci}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Signalement */}
+        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-sm text-yellow-800">
+            <strong>⚠️ Effet indésirable ?</strong> Signalez-le conformément à la réglementation ABMed.
+          </p>
+          <Link
+            to="/signalement"
+            className="text-sm font-medium text-yellow-900 bg-yellow-100 px-4 py-2 rounded-lg hover:bg-yellow-200 transition-colors"
+          >
+            Signaler
+          </Link>
         </div>
       </div>
     </div>

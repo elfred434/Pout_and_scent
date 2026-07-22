@@ -1,12 +1,17 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+"""
+Django's command-line utility for administrative tasks.
+L'environnement est détecté via DJANGO_ENV (dev/prod).
+"""
 import os
 import sys
 
 
 def main():
     """Run administrative tasks."""
+    # Détecte l'environnement automatiquement
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pout_scent.settings')
+    
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

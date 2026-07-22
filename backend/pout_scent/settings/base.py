@@ -1,3 +1,7 @@
+"""
+Configuration de base Django — Pout & Scent
+Partagée entre dev et prod. Ne jamais utiliser directement.
+"""
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -8,12 +12,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
+# ============================================================
+# CORE
+# ============================================================
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
-# --- Apps ---
+# ============================================================
+# APPS
+# ============================================================
 DJANGO_APPS = [
+    "daphne",  # ASGI server — DOIT être avant django.contrib.staticfiles
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -23,6 +33,7 @@ DJANGO_APPS = [
     "django.contrib.postgres",
 ]
 THIRD_PARTY_APPS = [
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
@@ -44,9 +55,13 @@ LOCAL_APPS = [
     "apps.promotions",
     "apps.reviews",
     "apps.notifications",
+    "apps.chat",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
+# ============================================================
+# MIDDLEWARE
+# ============================================================
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -77,8 +92,23 @@ TEMPLATES = [
 ]
 ROOT_URLCONF = "pout_scent.urls"
 WSGI_APPLICATION = "pout_scent.wsgi.application"
+ASGI_APPLICATION = "pout_scent.asgi.application"
 
-# --- DB ---
+# ============================================================
+# CHANNELS (WebSocket)
+# ============================================================
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env("REDIS_URL", default="redis://localhost:6379/0")],
+        },
+    },
+}
+
+# ============================================================
+# DATABASE
+# ============================================================
 DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
@@ -86,7 +116,9 @@ DATABASE_ROUTERS = ["pout_scent.db_router.PrimaryReplicaRouter"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CONN_MAX_AGE = 600
 
-# --- Cache Redis ---
+# ============================================================
+# CACHE (Redis)
+# ============================================================
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -98,7 +130,9 @@ CACHES = {
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
-# --- Password ---
+# ============================================================
+# PASSWORD VALIDATION
+# ============================================================
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 10}},
@@ -106,22 +140,30 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# --- i18n ---
+# ============================================================
+# i18n
+# ============================================================
 LANGUAGE_CODE = "fr-fr"
 TIME_ZONE = "Africa/Porto-Novo"
 USE_I18N = True
 USE_TZ = True
 
-# --- Static / Media ---
+# ============================================================
+# STATIC / MEDIA
+# ============================================================
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# --- Auth custom ---
+# ============================================================
+# AUTH CUSTOM
+# ============================================================
 AUTH_USER_MODEL = "users.User"
 
-# --- DRF ---
+# ============================================================
+# DJANGO REST FRAMEWORK
+# ============================================================
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -129,7 +171,6 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
-    # ✅ Utilisation explicite des classes pour éviter les strings
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
@@ -141,7 +182,12 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ),
-    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "user": "300/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",
+        "user": "300/min",
+        "auth": "10/min",       # Endpoints d'authentification
+        "password_reset": "5/hour",  # Reset mot de passe
+    },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "apps.common.exceptions.custom_exception_handler",
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S%z",
@@ -150,8 +196,9 @@ REST_FRAMEWORK = {
     ),
 }
 
-
-# --- JWT ---
+# ============================================================
+# JWT
+# ============================================================
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -160,7 +207,9 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-# --- Allauth ---
+# ============================================================
+# ALLAUTH
+# ============================================================
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
@@ -176,7 +225,9 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# --- Email SMTP ---
+# ============================================================
+# EMAIL (SMTP)
+# ============================================================
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="localhost")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
@@ -185,13 +236,17 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = env("EMAIL_FROM", default="noreply@poutscent.bj")
 
-# --- CORS ---
+# ============================================================
+# CORS
+# ============================================================
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
 ]
 
-# --- Spectacular ---
+# ============================================================
+# SPECTACULAR (API Docs)
+# ============================================================
 SPECTACULAR_SETTINGS = {
     "TITLE": "Pout & Scent API",
     "DESCRIPTION": "API de la plateforme de revente de parfums & cosmétiques",
@@ -200,12 +255,13 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "ENUM_NAME_OVERRIDES": {},
     "SCHEMA_PATH_PREFIX": r'/api/v[0-9]',
-    # ✅ Ignore les warnings de composants anonymes (Verify2FAView, etc.)
-    "PREPROCESSING_HOOKS": [], 
-    "DISABLE_ERRORS_AND_WARNINGS": True, # Force l'affichage même en cas d'erreur mineure
+    "PREPROCESSING_HOOKS": [],
+    "DISABLE_ERRORS_AND_WARNINGS": True,
 }
 
-# --- Celery ---
+# ============================================================
+# CELERY
+# ============================================================
 CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_ACCEPT_CONTENT = ["json"]
@@ -214,11 +270,62 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 
-# --- Métier ---
+# ============================================================
+# LOGGING
+# ============================================================
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} {module}.{funcName}:{lineno} — {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "[{asctime}] {levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "app.log",
+            "maxBytes": 10 * 1024 * 1024,  # 10 Mo
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "apps": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+# ============================================================
+# MÉTIER
+# ============================================================
 STOCK_EXPIRY_HOURS = 72
 LOW_STOCK_THRESHOLD = 5
 XOF_DECIMAL_PLACES = 2
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
-# - Google OAuth -
+
+# Google OAuth
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")

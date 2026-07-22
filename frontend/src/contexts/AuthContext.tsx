@@ -1,11 +1,26 @@
-// ============================================================
-// AUTH CONTEXT — Gestion de l'authentification
-// ============================================================
-import { createContext, useContext, ReactNode } from 'react';
-import { useQuery, useMutation, UseMutationResult } from '@tanstack/react-query';
-import { authEndpoints, LoginResponse, LoginPayload, RegisterPayload, User } from '@/api/endpoints';
+/**
+ * AuthContext — Gestion centralisée de l'authentification
+ * Pout & Scent
+ *
+ * Utilise TanStack Query pour le user, et useMutation pour login/register/google.
+ */
+import { createContext, useContext, ReactNode, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
+import { authEndpoints } from '@/api/endpoints';
+import { queryKeys } from '@/lib/queryKeys';
+import { toast } from '@/components/common/ToastContainer';
+import { extractApiError } from '@/hooks/useToast';
+import type { LoginResponse, LoginPayload, RegisterPayload, User } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { setTokens, clearTokens, getAccessToken, getRememberMe } from '@/lib/authStorage';
+import {
+  setTokens,
+  clearTokens,
+  getAccessToken,
+  getRememberMe,
+  getTokens,
+} from '@/lib/authStorage';
+
+// ─── Types ─────────────────────────────────────────────────
 
 interface AuthContextType {
   user: User | null;
@@ -19,76 +34,88 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ─── Provider ──────────────────────────────────────────────
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // ✅ Récupérer le profil utilisateur si un token existe
+  // Récupérer l'utilisateur connecté
   const { data: user, isLoading } = useQuery<User>({
-    queryKey: ['user'],
+    queryKey: queryKeys.auth.user(),
     queryFn: () => authEndpoints.me().then((res) => res.data),
     retry: false,
     enabled: !!getAccessToken(),
+    staleTime: 5 * 60 * 1000, // 5 min
   });
 
-  // ✅ Login avec gestion du 2FA et "Se souvenir de moi"
+  // Login
   const login = useMutation<LoginResponse, Error, LoginPayload & { rememberMe?: boolean }>({
     mutationFn: (data) => {
       const { rememberMe, ...credentials } = data;
       return authEndpoints.login(credentials).then((res) => res.data);
     },
     onSuccess: (response, variables) => {
-      // Si le backend demande le 2FA, ne pas stocker les tokens
-      if (response.requires_2fa) {
-        console.log('🔐 2FA required');
-        return;
-      }
+      if (response.requires_2fa) return;
 
-      // Stocker les tokens selon le choix "Se souvenir de moi"
       const tokens = response.data || response;
-      if (tokens.access && tokens.refresh) {
+      if ((tokens as any).access && (tokens as any).refresh) {
         const rememberMe = variables.rememberMe ?? getRememberMe();
-        setTokens(tokens.access, tokens.refresh, rememberMe);
-        console.log(`✅ Login successful (${rememberMe ? 'localStorage' : 'sessionStorage'})`);
+        setTokens((tokens as any).access, (tokens as any).refresh, rememberMe);
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
       }
+    },
+    onError: (error) => {
+      // Ne pas afficher de toast ici — la page login gère ses propres erreurs
+      // pour pouvoir rediriger vers 2FA si nécessaire
     },
   });
 
-  // ✅ Register
+  // Register
   const register = useMutation<LoginResponse, Error, RegisterPayload>({
     mutationFn: (data) =>
       authEndpoints.register(data).then((res) => res.data),
     onSuccess: (response) => {
       const tokens = response.data || response;
-      if (tokens.access && tokens.refresh) {
-        setTokens(tokens.access, tokens.refresh, true);
-        console.log('✅ Register successful');
+      if ((tokens as any).access && (tokens as any).refresh) {
+        setTokens((tokens as any).access, (tokens as any).refresh, true);
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
+        toast.success('Compte créé avec succès !');
       }
+    },
+    onError: (error) => {
+      // La page register gère ses propres erreurs pour afficher les erreurs de validation
     },
   });
 
-  // ✅ Google OAuth
+  // Google OAuth
   const googleLogin = useMutation<LoginResponse, Error, { credential: string }>({
     mutationFn: (data) =>
       authEndpoints.googleAuth(data).then((res) => res.data),
     onSuccess: (response) => {
       const tokens = response.data || response;
-      if (tokens.access && tokens.refresh) {
-        // Toujours persister pour Google OAuth
-        setTokens(tokens.access, tokens.refresh, true);
-        console.log('✅ Google login successful');
+      if ((tokens as any).access && (tokens as any).refresh) {
+        setTokens((tokens as any).access, (tokens as any).refresh, true);
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
+        toast.success('Connexion Google réussie !');
       }
     },
     onError: (error) => {
-      console.error('❌ Google login error:', error);
+      toast.error(extractApiError(error));
     },
   });
 
-  // ✅ Logout
-  const logout = () => {
+  // Logout
+  const logout = useCallback(() => {
+    const { refresh } = getTokens();
+    if (refresh) {
+      authEndpoints.logout({ refresh }).catch(() => {});
+    }
     clearTokens();
+    queryClient.clear();
     navigate('/');
-    window.location.reload();
-  };
+    toast.info('Vous avez été déconnecté');
+  }, [navigate, queryClient]);
 
   const value: AuthContextType = {
     user: user || null,
@@ -102,6 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+// ─── Hook ──────────────────────────────────────────────────
 
 export function useAuth() {
   const context = useContext(AuthContext);

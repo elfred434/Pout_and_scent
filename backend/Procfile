@@ -1,0 +1,12 @@
+# ============================================================
+# Procfile — Déploiement sur Render / Heroku
+# ============================================================
+
+# Serveur ASGI (HTTP + WebSocket)
+web: daphne -b 0.0.0.0 -p $PORT pout_scent.asgi:application
+
+# Worker Celery
+worker: celery -A pout_scent worker --loglevel=info --concurrency=2
+
+# Beat Celery (tâches planifiées)
+beat: celery -A pout_scent beat --loglevel=info

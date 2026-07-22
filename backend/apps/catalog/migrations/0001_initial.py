@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Catégorie',
                 'verbose_name_plural': 'Catégories',
-                'indexes': [django.contrib.postgres.indexes.GinIndex(fields=['nom'], name='gin_categorie_nom')],
+                'indexes': [models.Index(fields=['nom'], name='idx_categorie_nom')],
             },
         ),
         migrations.CreateModel(

@@ -1,11 +1,14 @@
-// ============================================================
-// SECURITY PAGE — Changement de mot de passe
-// ============================================================
+/**
+ * SECURITY PAGE — Changement de mot de passe
+ * Pout & Scent
+ */
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
+import { toast } from '@/components/common/ToastContainer';
+import { extractApiError } from '@/hooks/useToast';
 import { Lock, Shield, Eye, EyeOff } from 'lucide-react';
 
 export function SecurityPage() {
@@ -15,41 +18,37 @@ export function SecurityPage() {
     new_password: '',
     confirm_password: '',
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const changePasswordMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: { current_password: string; new_password: string }) => {
       await apiClient.post('/auth/password/change/', data);
     },
     onSuccess: () => {
-      setSuccess('Mot de passe modifié avec succès !');
-      setError('');
       setFormData({ current_password: '', new_password: '', confirm_password: '' });
-      setTimeout(() => setSuccess(''), 3000);
+      toast.success('Mot de passe modifié avec succès !');
     },
-    onError: (err: any) => {
-      setError(err.response?.data?.detail || 'Erreur lors du changement de mot de passe');
-      setSuccess('');
+    onError: (error) => {
+      toast.error(extractApiError(error));
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     if (formData.new_password !== formData.confirm_password) {
-      setError('Les mots de passe ne correspondent pas');
+      toast.error('Les mots de passe ne correspondent pas');
       return;
     }
 
-    if (formData.new_password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+    if (formData.new_password.length < 10) {
+      toast.warning('Le mot de passe doit contenir au moins 10 caractères');
       return;
     }
 
-    changePasswordMutation.mutate(formData);
+    changePasswordMutation.mutate({
+      current_password: formData.current_password,
+      new_password: formData.new_password,
+    });
   };
 
   return (
@@ -62,7 +61,7 @@ export function SecurityPage() {
       <div className="max-w-lg">
         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-700">
-            <strong>Conseil :</strong> Utilisez un mot de passe unique d'au moins 8 caractères,
+            <strong>Conseil :</strong> Utilisez un mot de passe unique d'au moins 10 caractères,
             mélangeant lettres, chiffres et caractères spéciaux.
           </p>
         </div>
@@ -102,18 +101,6 @@ export function SecurityPage() {
             {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             Afficher les mots de passe
           </label>
-
-          {error && (
-            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-              {success}
-            </div>
-          )}
 
           <Button
             type="submit"

@@ -1,44 +1,77 @@
-# Dependencies
-node_modules/
-frontend/node_modules/
-backend/venv/
-venv/
+# ============================================================
+# .gitignore — Pout & Scent
+# ============================================================
 
-# Environment variables
-.env
-.env.local
-.env.production
-
-# Build outputs
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
 dist/
 build/
-frontend/dist/
-frontend/build/
+.eggs/
 
-# IDE
+# --- Environnements virtuels ---
+.venv/
+venv/
+env/
+
+# --- Variables d'environnement ---
+.env
+.env.local
+.env.*.local
+
+# --- Base de données ---
+db.sqlite3
+db.sqlite3-journal
+
+# --- Fichiers statiques collectés ---
+staticfiles/
+media/
+
+# --- Logs ---
+logs/
+*.log
+
+# --- IDE ---
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS
+# --- OS ---
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
+# --- Node.js ---
+node_modules/
 npm-debug.log*
 
-# Testing
+# --- Build frontend ---
+frontend/dist/
+
+# --- Coverage ---
 coverage/
+htmlcov/
+.coverage
+
+# --- Cache ---
+.cache/
 .pytest_cache/
-__pycache__/
-*.pyc
+.ruff_cache/
+.mypy_cache/
 
-# Django
-db.sqlite3
-staticfiles/
-media/
+# --- Docker ---
+docker-compose.override.yml
 
-# Vite
-frontend/node_modules/.vite/
+# --- Fichiers temporaires ---
+*.patch
+*.bak
+*.tmp
+screenshot-*.png
+
+# --- Secrets ---
+*.pem
+*.key

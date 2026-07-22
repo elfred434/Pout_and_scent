@@ -1,114 +1,219 @@
 import { Link } from 'react-router-dom';
+import { ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
-import { Button } from '@/components/common/Button';
-import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
+import { useProducts } from '@/hooks/useProducts';
 
 export function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice } = useCart();
+  const { data: productsData } = useProducts({ page: 1 });
+
+  // Cross-sell : produits recommandés
+  const recommendedProducts = productsData?.results?.slice(0, 4) || [];
 
   if (items.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <ShoppingCart className="h-24 w-24 text-gray-300 mx-auto mb-6" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Votre panier est vide</h2>
-        <Link
-          to="/catalogue"
-          className="inline-block bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700"
-        >
-          Découvrir nos produits
-        </Link>
+      <div className="min-h-[60vh] flex items-center justify-center bg-white dark:bg-neutral-900">
+        <div className="text-center space-y-6 px-6">
+          <div className="w-24 h-24 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto">
+            <ShoppingBag className="h-12 w-12 text-neutral-400 dark:text-neutral-500" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-title text-neutral-900 dark:text-white">Votre panier est vide</h2>
+            <p className="text-body text-neutral-600 dark:text-neutral-400 max-w-md mx-auto">
+              Decouvrez notre collection et trouvez le parfum parfait pour vous
+            </p>
+          </div>
+          <Link to="/catalogue" className="btn-primary inline-flex">
+            Voir le catalogue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Mon Panier</h1>
-
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
-            <div
-              key={item.variante_id}
-              className="bg-white p-4 rounded-lg shadow-sm flex gap-4"
+    <div className="min-h-screen">
+      {/* ═══ Header — fond blanc ═══ */}
+      <section className="bg-white dark:bg-neutral-900 py-12 border-b border-neutral-100 dark:border-neutral-800">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-tiny font-semibold text-primary-600 uppercase tracking-[0.2em] mb-2">
+                Panier
+              </p>
+              <h1 className="text-display text-neutral-900 dark:text-white">
+                Votre <span className="text-primary-600">panier</span>
+              </h1>
+            </div>
+            <button
+              onClick={clearCart}
+              className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-red-600 transition-colors"
             >
-              <img
-                src={item.image_url || '/placeholder.png'}
-                alt={item.produit_nom}
-                className="w-24 h-24 object-cover rounded"
-              />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{item.produit_nom}</h3>
-                <p className="text-sm text-gray-500">
-                  {item.produit_marque} • {item.contenance_ml} ml
-                </p>
-                <p className="mt-2 font-bold text-gray-900">
-                  {item.prix.toLocaleString('fr-FR')} FCFA
-                </p>
-              </div>
+              Vider le panier
+            </button>
+          </div>
+        </div>
+      </section>
 
-              <div className="flex flex-col items-end justify-between">
-                <button
-                  onClick={() => removeItem(item.variante_id)}
-                  className="text-red-500 hover:text-red-700 p-2"
-                  title="Supprimer"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
+      {/* ═══ Contenu — fond gris ═══ */}
+      <section className="py-12 bg-neutral-150 dark:bg-neutral-800">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Liste des articles */}
+            <div className="lg:col-span-2 space-y-4">
+              {items.map((item) => (
+                <div key={item.variante_id} className="card-static dark:bg-neutral-900 dark:border-neutral-700 p-6">
+                  <div className="flex gap-6">
+                    {/* Image avec cadre */}
+                    <div className="w-24 h-32 bg-neutral-100 dark:bg-neutral-800 rounded-xl overflow-hidden flex-shrink-0 border border-neutral-200 dark:border-neutral-700">
+                      <img
+                        src={item.image_url || 'https://via.placeholder.com/96x128?text=P%26S'}
+                        alt={item.produit_nom}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
 
-                <div className="flex items-center border rounded-lg">
-                  <button
-                    onClick={() =>
-                      updateQuantity(item.variante_id, Math.max(1, item.quantite - 1))
-                    }
-                    className="px-3 py-1 hover:bg-gray-100"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="px-3 font-medium">{item.quantite}</span>
-                  <button
-                    onClick={() => updateQuantity(item.variante_id, item.quantite + 1)}
-                    className="px-3 py-1 hover:bg-gray-100"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
+                    {/* Infos */}
+                    <div className="flex-1 space-y-3">
+                      <div>
+                        <p className="text-tiny font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                          {item.produit_marque}
+                        </p>
+                        <h3 className="text-sm font-medium text-neutral-900 dark:text-white mt-1">
+                          {item.produit_nom}
+                        </h3>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                          {item.contenance_ml} ml
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        {/* Sélecteur de quantité premium */}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => updateQuantity(item.variante_id, Math.max(1, item.quantite - 1))}
+                            className="qty-btn dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
+                          >
+                            -
+                          </button>
+                          <span className="qty-value dark:text-white">{item.quantite}</span>
+                          <button
+                            onClick={() => updateQuantity(item.variante_id, item.quantite + 1)}
+                            className="qty-btn dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <p className="text-base font-semibold text-neutral-900 dark:text-white">
+                            {(item.prix * item.quantite).toLocaleString('fr-FR')} FCFA
+                          </p>
+                          <button
+                            onClick={() => removeItem(item.variante_id)}
+                            className="p-2 text-neutral-400 dark:text-neutral-500 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Résumé de la commande — carte distincte */}
+            <div className="lg:col-span-1">
+              <div className="card-static dark:bg-neutral-900 dark:border-neutral-700 p-6 space-y-6 sticky top-24">
+                <h2 className="text-title text-neutral-900 dark:text-white">Resume de la commande</h2>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-600 dark:text-neutral-400">Sous-total</span>
+                    <span className="font-medium text-neutral-900 dark:text-white">
+                      {totalPrice.toLocaleString('fr-FR')} FCFA
+                    </span>
+                  </div>
+
+                  <div className="divider dark:border-neutral-700" />
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-600 dark:text-neutral-400">Livraison</span>
+                    <span className="font-medium text-neutral-900 dark:text-white">A definir</span>
+                  </div>
+
+                  <div className="divider dark:border-neutral-700" />
+
+                  <div className="flex justify-between text-base pt-2">
+                    <span className="font-semibold text-neutral-900 dark:text-white">Total</span>
+                    <span className="font-semibold text-primary-600 text-lg">
+                      {totalPrice.toLocaleString('fr-FR')} FCFA
+                    </span>
+                  </div>
+                </div>
+
+                <Link to="/checkout" className="btn-primary w-full shadow-md">
+                  Passer la commande
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center">
+                  Paiement a la livraison
+                </p>
               </div>
             </div>
-          ))}
-
-          <button
-            onClick={clearCart}
-            className="text-red-600 hover:text-red-700 text-sm font-medium"
-          >
-            Vider le panier
-          </button>
-        </div>
-
-        {/* Order Summary */}
-        <div className="bg-white p-6 rounded-lg shadow-sm h-fit sticky top-24">
-          <h2 className="font-bold text-lg mb-4">Résumé de la commande</h2>
-          <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-gray-600">
-              <span>Sous-total</span>
-              <span>{totalPrice.toLocaleString('fr-FR')} FCFA</span>
-            </div>
-            <div className="flex justify-between text-gray-600 text-sm">
-              <span>Livraison</span>
-              <span>À définir</span>
-            </div>
           </div>
-          <div className="border-t pt-4 flex justify-between font-bold text-lg mb-6">
-            <span>Total</span>
-            <span>{totalPrice.toLocaleString('fr-FR')} FCFA</span>
+        </div>
+      </section>
+
+      {/* ═══ Cross-sell — fond blanc ═══ */}
+      <section className="py-12 bg-white dark:bg-neutral-900 border-t border-neutral-100 dark:border-neutral-800">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <p className="text-tiny font-semibold text-primary-600 uppercase tracking-[0.2em] mb-2">
+              Vous aimerez aussi
+            </p>
+            <h2 className="text-display text-neutral-900 dark:text-white">
+              Produits <span className="text-primary-600">recommandes</span>
+            </h2>
           </div>
 
-          <Link to="/checkout">
-            <Button className="w-full">Passer la commande</Button>
-          </Link>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {recommendedProducts.map((product) => (
+              <Link
+                key={product.id}
+                to={`/produit/${product.id}`}
+                className="group block"
+              >
+                <div className="bg-neutral-50 dark:bg-neutral-800 rounded-2xl overflow-hidden border border-neutral-100 dark:border-neutral-700 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                  <div className="aspect-[4/5] bg-neutral-100 dark:bg-neutral-700 overflow-hidden">
+                    <img
+                      src={product.images?.[0]?.image || 'https://via.placeholder.com/400x500?text=P%26S'}
+                      alt={product.nom}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-4 space-y-2">
+                    <p className="text-tiny font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                      {product.marque}
+                    </p>
+                    <h3 className="text-sm font-medium text-neutral-900 dark:text-white line-clamp-2">
+                      {product.nom}
+                    </h3>
+                    {product.variantes?.[0] && (
+                      <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        {parseFloat(product.variantes[0].prix).toLocaleString('fr-FR')} FCFA
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -20,8 +20,11 @@ urlpatterns = [
     path("api/v1/promotions/", include("apps.promotions.urls")),
     path("api/v1/reviews/", include("apps.reviews.urls")),
     
-    # ✅ ORDERS (J5) - À DÉCOMMENTER / AJOUTER
+    # ✅ ORDERS (J5)
     path("api/v1/orders/", include("apps.orders.urls")),
+    
+    # 💬 CHAT (J6)
+    path("api/v1/chat/", include("apps.chat.urls")),
 ]
 
 if settings.DEBUG:

@@ -15,17 +15,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ("email", "first_name", "last_name", "password", "password_confirm")
 
     def validate(self, attrs):
-        # Vérifier que les mots de passe correspondent
         if attrs["password"] != attrs["password_confirm"]:
-            raise serializers.ValidationError({"password_confirm": "Les mots de passe ne correspondent pas."})
-        
-        # Supprimer password_confirm des données validées
+            raise serializers.ValidationError(
+                {"password_confirm": "Les mots de passe ne correspondent pas."}
+            )
         attrs.pop("password_confirm")
-        
         return attrs
 
     def create(self, validated_data):
-        # password_confirm a déjà été retiré dans validate()
         return User.objects.create_user(**validated_data)
 
 
@@ -48,7 +45,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data["user"] = UserSerializer(self.user).data
 
-        # Si admin avec 2FA activée, on ne délivre pas le token tout de suite
+        # Si admin avec 2FA activée, on délivre un token temporaire
         if self.user.role == "ADMIN" and self.user.is_2fa_enabled:
             from django_otp.plugins.otp_totp.models import TOTPDevice
             device = TOTPDevice.objects.filter(user=self.user, confirmed=True).first()
@@ -69,5 +66,9 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
     token = serializers.CharField()
-    new_password = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
 
+    def validate_new_password(self, value):
+        """Valide le nouveau mot de passe avec les validateurs Django."""
+        validate_password(value)
+        return value

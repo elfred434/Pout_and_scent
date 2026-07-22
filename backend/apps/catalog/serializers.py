@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Categorie, Produit, ProduitImage, VarianteProduit
+from .models import (
+    Categorie,
+    Produit,
+    ProduitImage,
+    VarianteProduit,
+    SignalementEffetIndesirable,
+)
 from apps.promotions.services import PricingService
 
 
@@ -59,7 +65,10 @@ class ProduitListSerializer(serializers.ModelSerializer):
 
 
 class ProduitDetailSerializer(serializers.ModelSerializer):
-    """Serializer pour le détail d'un produit."""
+    """
+    Serializer pour le détail d'un produit.
+    Inclut les champs réglementaires ABMed (Arrêté du 18/01/2022).
+    """
     categorie = CategorieSerializer(read_only=True)
     variantes = VarianteProduitSerializer(many=True, read_only=True)
     images = ProduitImageSerializer(many=True, read_only=True)
@@ -79,6 +88,48 @@ class ProduitDetailSerializer(serializers.ModelSerializer):
             "is_active",
             "variantes",
             "images",
+            # ─── Champs réglementaires ABMed ───
+            "amm_number",
+            "liste_inci",
+            "pays_origine",
+            "date_peremption",
+            "numero_lot",
             "created_at",
             "updated_at",
         )
+
+
+# ─── SERIALIZER SIGNALEMENT EFFETS INDÉSIRABLES ─────────────
+class SignalementEffetIndesirableSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour le signalement d'effets indésirables.
+    Obligation réglementaire ABMed.
+    """
+    class Meta:
+        model = SignalementEffetIndesirable
+        fields = (
+            "id",
+            "produit",
+            "nom_produit_signale",
+            "email_signalant",
+            "telephone_signalant",
+            "description",
+            "gravite",
+            "created_at",
+        )
+        read_only_fields = ("id", "created_at")
+
+    def validate_description(self, value):
+        if len(value.strip()) < 20:
+            raise serializers.ValidationError(
+                "La description doit contenir au moins 20 caractères."
+            )
+        return value
+
+    def validate(self, attrs):
+        # Au moins un produit (catalogue ou nom libre) doit être renseigné
+        if not attrs.get("produit") and not attrs.get("nom_produit_signale"):
+            raise serializers.ValidationError(
+                "Veuillez indiquer le produit concerné."
+            )
+        return attrs

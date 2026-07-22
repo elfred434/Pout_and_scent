@@ -1,21 +1,17 @@
-# Base requirements
+# ============================================================
+# Dépendances de production
+# ============================================================
 -r base.txt
 
-# Serveur WSGI production
-gunicorn==22.0.0
-
-# PostgreSQL
-psycopg2-binary==2.9.9
+# Serveur WSGI
+gunicorn==23.0.0
 
 # Fichiers statiques
 whitenoise[brotli]==6.7.0
-
-# CORS
-django-cors-headers==4.4.0
 
 # Stockage médias cloud
 django-cloudinary-storage==0.13.1
 cloudinary==1.41.0
 
-# Variables d'environnement
-django-environ==0.11.2
+# Monitoring
+sentry-sdk[django]==2.19.2

@@ -30,11 +30,11 @@ class Promotion(BaseModel):  # ✅ CHANGÉ : BaseModel
         verbose_name_plural = "Promotions"  # ✅ ESPACE SUPPRIMÉ
         constraints = [
             models.CheckConstraint(
-                check=(models.Q(produit__isnull=False) | models.Q(categorie__isnull=False)),
+                condition=(models.Q(produit__isnull=False) | models.Q(categorie__isnull=False)),
                 name="promo_cible_requise"  # ✅ ESPACE SUPPRIMÉ
             ),
             models.CheckConstraint(
-                check=models.Q(date_fin__gte=models.F("date_debut")),
+                condition=models.Q(date_fin__gte=models.F("date_debut")),
                 name="promo_dates_coherentes"  # ✅ ESPACE SUPPRIMÉ
             ),
         ]

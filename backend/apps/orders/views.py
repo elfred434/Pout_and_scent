@@ -1,9 +1,12 @@
+import logging
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.users.permissions import IsAdminRole
+from apps.users.models import Adresse
 from .models import Commande
 from .serializers import (
     CommandeListSerializer,
@@ -11,7 +14,9 @@ from .serializers import (
     CheckoutSerializer,
     TransitionSerializer,
 )
-from .services import CheckoutService, CommandeTransitionService
+from .services import CheckoutService, CommandeTransitionService, StockError
+
+logger = logging.getLogger(__name__)
 
 
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
@@ -21,7 +26,7 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     - Admin : voit toutes les commandes
     """
     permission_classes = [IsAuthenticated]
-    serializer_class = CommandeListSerializer  # ✅ Serializer par défaut
+    serializer_class = CommandeListSerializer
 
     def get_queryset(self):
         qs = Commande.objects.select_related(
@@ -30,14 +35,12 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
             "lignes__variante__produit"
         ).order_by("-created_at")
 
-        # Si l'utilisateur n'est pas admin, il ne voit que ses commandes
-        if not self.request.user.role == "ADMIN":
+        if self.request.user.role != "ADMIN":
             qs = qs.filter(user=self.request.user)
 
         return qs
 
     def get_serializer_class(self):
-        """Retourne le bon serializer selon l'action."""
         if self.action == "retrieve":
             return CommandeDetailSerializer
         return CommandeListSerializer
@@ -59,10 +62,22 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 CommandeDetailSerializer(commande).data,
                 status=status.HTTP_201_CREATED,
             )
-        except Exception as e:
+        except StockError as e:
+            # Erreur métier liée au stock → 409 Conflict
             return Response(
                 {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_409_CONFLICT,
+            )
+        except Adresse.DoesNotExist:
+            return Response(
+                {"error": "Adresse de livraison introuvable"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.exception("Erreur inattendue lors du checkout")
+            return Response(
+                {"error": "Une erreur est survenue lors de la création de la commande"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @action(detail=True, methods=["post"], url_path="transition")
@@ -85,10 +100,16 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 user=request.user,
             )
             return Response(CommandeDetailSerializer(commande).data)
-        except Exception as e:
+        except ValueError as e:
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            logger.exception("Erreur inattendue lors de la transition de commande %s", commande.id)
+            return Response(
+                {"error": "Erreur interne lors de la transition"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @action(detail=True, methods=["post"], url_path="cancel")
@@ -96,13 +117,12 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         """Annuler une commande."""
         commande = self.get_object()
 
-        # Vérification des permissions
         is_admin = request.user.role == "ADMIN"
         is_owner = commande.user == request.user
 
         if not (is_admin or (is_owner and commande.statut == "EN_PREPARATION")):
             return Response(
-                {"error": "Permission refusée"},
+                {"error": "Permission refusée. Seules les commandes en préparation peuvent être annulées."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -113,8 +133,14 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 user=request.user,
             )
             return Response(CommandeDetailSerializer(commande).data)
-        except Exception as e:
+        except ValueError as e:
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            logger.exception("Erreur inattendue lors de l'annulation de commande %s", commande.id)
+            return Response(
+                {"error": "Erreur interne lors de l'annulation"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

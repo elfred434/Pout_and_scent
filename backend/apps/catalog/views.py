@@ -1,19 +1,24 @@
+import logging
+
 from django.db.models import Min, Prefetch
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters, status, generics
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Categorie, Produit, VarianteProduit
+from .models import Categorie, Produit, VarianteProduit, SignalementEffetIndesirable
 from .serializers import (
     CategorieSerializer,
     ProduitListSerializer,
     ProduitDetailSerializer,
+    SignalementEffetIndesirableSerializer,
 )
 from apps.users.permissions import IsAdminRole
+
+logger = logging.getLogger(__name__)
 
 
 class CategorieViewSet(viewsets.ModelViewSet):
@@ -33,6 +38,20 @@ class CategorieViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        categorie = serializer.save()
+        logger.info("Catégorie créée : %s (par %s)", categorie.nom, self.request.user.email)
+
+    def perform_update(self, serializer):
+        categorie = serializer.save()
+        logger.info("Catégorie mise à jour : %s (par %s)", categorie.nom, self.request.user.email)
+
+    def perform_destroy(self, instance):
+        # Soft delete : désactiver au lieu de supprimer
+        instance.is_active = False
+        instance.save()
+        logger.info("Catégorie désactivée : %s (par %s)", instance.nom, self.request.user.email)
+
 
 class ProduitViewSet(viewsets.ModelViewSet):
     """CRUD des produits. Lecture publique, écriture admin uniquement."""
@@ -43,10 +62,14 @@ class ProduitViewSet(viewsets.ModelViewSet):
     ordering_fields = ["prix_min", "note_moyenne", "created_at", "nb_avis"]
     ordering = ["-created_at"]
 
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [AllowAny()]
+        return [IsAdminRole()]
+
     def get_queryset(self):
         qs = Produit.objects.filter(is_active=True)
 
-        # ✅ OPTIMISATION : select_related + prefetch_related avec to_attr
         qs = qs.select_related("categorie").prefetch_related(
             "images",
             Prefetch(
@@ -72,7 +95,7 @@ class ProduitViewSet(viewsets.ModelViewSet):
         if contenance:
             qs = qs.filter(
                 variantes__contenance_ml=contenance,
-                variantes__is_active=True
+                variantes__is_active=True,
             ).distinct()
 
         return qs
@@ -85,3 +108,55 @@ class ProduitViewSet(viewsets.ModelViewSet):
     @method_decorator(cache_page(60 * 15))  # Cache 15min pour la liste
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        produit = serializer.save()
+        logger.info("Produit créé : %s (par %s)", produit.nom, self.request.user.email)
+
+    def perform_update(self, serializer):
+        produit = serializer.save()
+        logger.info("Produit mis à jour : %s (par %s)", produit.nom, self.request.user.email)
+
+    def perform_destroy(self, instance):
+        # Soft delete : désactiver au lieu de supprimer
+        instance.is_active = False
+        instance.save()
+        logger.info("Produit désactivé : %s (par %s)", instance.nom, self.request.user.email)
+
+
+# ─── SIGNALEMENT EFFETS INDÉSIRABLES (Obligation ABMed) ─────
+class SignalementEffetIndesirableView(generics.CreateAPIView):
+    """
+    Endpoint public pour signaler un effet indésirable d'un produit cosmétique.
+    Obligation réglementaire ABMed — Arrêté du 18/01/2022.
+    """
+    serializer_class = SignalementEffetIndesirableSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        signalement = serializer.save()
+
+        logger.info(
+            "Signalement effet indésirable reçu : produit='%s', gravité=%s, email=%s",
+            signalement.nom_produit_signale,
+            signalement.gravite,
+            signalement.email_signalant,
+        )
+
+        return Response(
+            {
+                "success": True,
+                "message": (
+                    "Votre signalement a été enregistré. "
+                    "Il sera examiné par notre équipe et transmis à l'ABMed si nécessaire. "
+                    "Merci pour votre vigilance."
+                ),
+                "data": {
+                    "id": str(signalement.id),
+                    "statut": signalement.statut,
+                },
+            },
+            status=status.HTTP_201_CREATED,
+        )
