@@ -1,17 +1,17 @@
 # ============================================================
-# Dépendances de production
+# Dépendances de production — 100% GRATUIT (Render + Vercel)
 # ============================================================
 -r base.txt
 
-# Serveur WSGI
-gunicorn==23.0.0
+# Serveur ASGI (Daphne déjà dans base.txt)
+# daphne==4.1.2
 
 # Fichiers statiques
 whitenoise[brotli]==6.7.0
 
-# Stockage médias cloud
-django-cloudinary-storage==0.13.1
-cloudinary==1.41.0
+# Database URL parser (pour Render PostgreSQL)
+dj-database-url==2.3.0
 
-# Monitoring
-sentry-sdk[django]==2.19.2
+# Pas de Cloudinary (FileSystemStorage gratuit)
+# Pas de Sentry (optionnel)
+# Pas de Redis (LocMemCache gratuit)

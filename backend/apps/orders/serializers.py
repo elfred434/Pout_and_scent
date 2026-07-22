@@ -32,12 +32,16 @@ class CommandeListSerializer(serializers.ModelSerializer):
     """Serializer pour la liste des commandes (performances optimisées)."""
     lignes = LigneCommandeSerializer(many=True, read_only=True)
     adresse_libelle = serializers.CharField(source="adresse.libelle", read_only=True)
+    user_email = serializers.CharField(source="user.email", read_only=True)
+    user_nom = serializers.SerializerMethodField()
     nb_articles = serializers.SerializerMethodField()
 
     class Meta:
         model = Commande
         fields = (
             "id",
+            "user_email",
+            "user_nom",
             "statut",
             "montant_total",
             "montant_reduit",
@@ -52,6 +56,9 @@ class CommandeListSerializer(serializers.ModelSerializer):
     def get_nb_articles(self, obj):
         """Retourne le nombre total d'articles dans la commande."""
         return sum(ligne.quantite for ligne in obj.lignes.all())
+
+    def get_user_nom(self, obj):
+        return obj.user.full_name if obj.user else None
 
 
 # ============================================================

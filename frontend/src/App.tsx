@@ -41,6 +41,18 @@ import { SecurityPage } from '@/pages/user/SecurityPage';
 // Pages promotions
 import { PromotionsPage } from '@/pages/promotions/PromotionsPage';
 
+// Pages admin
+import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { DashboardPage } from '@/pages/admin/DashboardPage';
+import { AdminProductsPage } from '@/pages/admin/ProductsPage';
+import { AdminCategoriesPage } from '@/pages/admin/CategoriesPage';
+import { AdminOrdersPage } from '@/pages/admin/OrdersPage';
+import { AdminPromotionsPage } from '@/pages/admin/PromotionsPage';
+import { AdminReviewsPage } from '@/pages/admin/ReviewsPage';
+import { AdminConversationsPage } from '@/pages/admin/ConversationsPage';
+import { AdminUsersPage } from '@/pages/admin/UsersPage';
+
 // Pages légales
 import { MentionsLegalesPage } from '@/pages/legal/MentionsLegalesPage';
 import { CGVPage } from '@/pages/legal/CGVPage';
@@ -65,6 +77,7 @@ export function App() {
               <CookieBanner />
 
               <Routes>
+                {/* Routes publiques avec Layout principal */}
                 <Route element={<Layout />}>
                   {/* Routes publiques */}
                   <Route path="/" element={<HomePage />} />
@@ -96,6 +109,19 @@ export function App() {
                   <Route path="/politique-confidentialite" element={<PolitiqueConfidentialitePage />} />
                   <Route path="/politique-cookies" element={<PolitiqueCookiesPage />} />
                   <Route path="/signalement" element={<SignalementPage />} />
+                </Route>
+
+                {/* Routes admin (sans Layout principal) */}
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="products" element={<AdminProductsPage />} />
+                  <Route path="categories" element={<AdminCategoriesPage />} />
+                  <Route path="orders" element={<AdminOrdersPage />} />
+                  <Route path="promotions" element={<AdminPromotionsPage />} />
+                  <Route path="reviews" element={<AdminReviewsPage />} />
+                  <Route path="conversations" element={<AdminConversationsPage />} />
+                  <Route path="users" element={<AdminUsersPage />} />
                 </Route>
               </Routes>
             </AuthProvider>

@@ -1,19 +1,38 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Truck, Shield, Heart } from 'lucide-react';
+import { ArrowRight, Sparkles, Truck, Shield, Heart, Settings } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { useActivePromotions } from '@/hooks/usePromotions';
+import { useAuth } from '@/contexts/AuthContext';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ProductSkeleton } from '@/components/products/ProductSkeleton';
 
 export function HomePage() {
   const { data: productsData, isLoading } = useProducts({ page: 1 });
   const { data: promosData } = useActivePromotions();
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === 'ADMIN';
 
   const products = productsData?.results?.slice(0, 4) || [];
   const hasPromos = promosData?.results && promosData.results.length > 0;
 
   return (
     <div className="animate-fade-in">
+      {/* ═══ Bandeau Admin (visible uniquement pour les admins) ═══ */}
+      {isAdmin && (
+        <div className="bg-primary-600 text-white py-2 px-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+            <Settings className="h-4 w-4" />
+            <Link 
+              to="/admin" 
+              className="text-sm font-medium hover:text-primary-100 transition-colors flex items-center gap-2"
+            >
+              Accéder au tableau de bord administrateur
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* ═══ Hero - Editorial avec dégradé + texture ═══ */}
       <section className="relative bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-primary-900 overflow-hidden">
         {/* Texture grain subtile */}

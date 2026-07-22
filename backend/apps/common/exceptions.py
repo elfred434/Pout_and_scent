@@ -2,8 +2,36 @@ from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 
 def custom_exception_handler(exc, context):
+    """
+    Exception handler personnalisé qui capture AUSSI les ValidationError Django
+    (soulevées par Model.full_clean() / Model.clean()).
+    """
+    # ─── Intercepter les ValidationError Django → convertir en 400 DRF ───
+    if isinstance(exc, DjangoValidationError):
+        if hasattr(exc, "message_dict"):
+            data = exc.message_dict
+        elif hasattr(exc, "messages"):
+            data = {"detail": exc.messages}
+        else:
+            data = {"detail": [str(exc)]}
+
+        return Response(
+            {
+                "success": False,
+                "error": {
+                    "code": 400,
+                    "message": _extract_message(data),
+                    "details": data,
+                },
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ─── Handler DRF standard ───
     response = exception_handler(exc, context)
     if response is not None:
         payload = {

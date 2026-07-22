@@ -6,16 +6,20 @@ from .models import Avis
 from .serializers import AvisSerializer
 from apps.common.exceptions import BusinessError
 
+
 class AvisViewSet(viewsets.ModelViewSet):
     """CRUD des avis."""
-    queryset = Avis.objects.filter(is_visible=True).select_related("user", "produit")
     serializer_class = AvisSerializer
-    
-    # ✅ CORRECTION : Utiliser les classes, pas les strings
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['produit', 'note']
     search_fields = ['commentaire', 'user__email']
     ordering_fields = ['created_at', 'note']
+
+    def get_queryset(self):
+        # Admin voit tout (y compris masqués) pour pouvoir modérer
+        if self.action in ("list",):
+            return Avis.objects.filter(is_visible=True).select_related("user", "produit")
+        return Avis.objects.all().select_related("user", "produit")
 
     def get_permissions(self):
         if self.action in ("list", "retrieve"):
@@ -26,14 +30,10 @@ class AvisViewSet(viewsets.ModelViewSet):
         """Validation métier : un client ne peut laisser qu'un seul avis par produit."""
         produit = serializer.validated_data["produit"]
         user = self.request.user
-        
+
         if Avis.objects.filter(produit=produit, user=user).exists():
             raise BusinessError("Vous avez déjà laissé un avis pour ce produit.")
-            
-        # Vérifier si l'utilisateur a acheté le produit (logique simplifiée ici)
-        # if not user.has_ordered(produit): 
-        #     raise BusinessError("Vous devez avoir acheté ce produit pour laisser un avis.")
-            
+
         serializer.save(user=user)
         self._recalculer_note(serializer.instance.produit)
 

@@ -1,19 +1,23 @@
 import logging
 
+from django.core.exceptions import ValidationError
 from django.db.models import Min, Prefetch
-from django.views.decorators.cache import cache_page
-from django.utils.decorators import method_decorator
 from rest_framework import viewsets, filters, status, generics
-from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, JSONParser
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Categorie, Produit, VarianteProduit, SignalementEffetIndesirable
+from .models import Categorie, Produit, VarianteProduit, ProduitImage, SignalementEffetIndesirable
 from .serializers import (
     CategorieSerializer,
     ProduitListSerializer,
     ProduitDetailSerializer,
+    ProduitWriteSerializer,
+    VarianteProduitSerializer,
+    VarianteProduitWriteSerializer,
+    ProduitImageSerializer,
+    ProduitImageWriteSerializer,
     SignalementEffetIndesirableSerializer,
 )
 from apps.users.permissions import IsAdminRole
@@ -23,20 +27,21 @@ logger = logging.getLogger(__name__)
 
 class CategorieViewSet(viewsets.ModelViewSet):
     """CRUD des catégories. Lecture publique, écriture admin uniquement."""
-    queryset = Categorie.objects.filter(is_active=True)
     serializer_class = CategorieSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["nom"]
     ordering_fields = ["nom", "created_at"]
 
+    def get_queryset(self):
+        # Admin voit tout (y compris inactives) pour pouvoir modifier/supprimer
+        if self.action in ("list",):
+            return Categorie.objects.filter(is_active=True)
+        return Categorie.objects.all()
+
     def get_permissions(self):
         if self.action in ("list", "retrieve"):
             return [AllowAny()]
         return [IsAdminRole()]
-
-    @method_decorator(cache_page(60 * 60))  # Cache 1h pour la liste
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         categorie = serializer.save()
@@ -68,7 +73,11 @@ class ProduitViewSet(viewsets.ModelViewSet):
         return [IsAdminRole()]
 
     def get_queryset(self):
-        qs = Produit.objects.filter(is_active=True)
+        # Admin voit tout (y compris inactifs) pour pouvoir modifier/supprimer
+        if self.action in ("list",):
+            qs = Produit.objects.filter(is_active=True)
+        else:
+            qs = Produit.objects.all()
 
         qs = qs.select_related("categorie").prefetch_related(
             "images",
@@ -82,46 +91,126 @@ class ProduitViewSet(viewsets.ModelViewSet):
         # Annotation du prix minimal pour tri/filtre
         qs = qs.annotate(prix_min=Min("variantes__prix"))
 
-        # Filtres prix
-        filtre_prix_min = self.request.query_params.get("prix_min")
-        filtre_prix_max = self.request.query_params.get("prix_max")
-        if filtre_prix_min:
-            qs = qs.filter(prix_min__gte=filtre_prix_min)
-        if filtre_prix_max:
-            qs = qs.filter(prix_min__lte=filtre_prix_max)
+        # Filtres prix (uniquement pour list)
+        if self.action == "list":
+            filtre_prix_min = self.request.query_params.get("prix_min")
+            filtre_prix_max = self.request.query_params.get("prix_max")
+            if filtre_prix_min:
+                qs = qs.filter(prix_min__gte=filtre_prix_min)
+            if filtre_prix_max:
+                qs = qs.filter(prix_min__lte=filtre_prix_max)
 
-        # Filtre contenance
-        contenance = self.request.query_params.get("contenance")
-        if contenance:
-            qs = qs.filter(
-                variantes__contenance_ml=contenance,
-                variantes__is_active=True,
-            ).distinct()
+            # Filtre contenance
+            contenance = self.request.query_params.get("contenance")
+            if contenance:
+                qs = qs.filter(
+                    variantes__contenance_ml=contenance,
+                    variantes__is_active=True,
+                ).distinct()
 
         return qs
 
     def get_serializer_class(self):
         if self.action == "retrieve":
             return ProduitDetailSerializer
+        if self.action in ("create", "update", "partial_update"):
+            return ProduitWriteSerializer
         return ProduitListSerializer
 
-    @method_decorator(cache_page(60 * 15))  # Cache 15min pour la liste
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
     def perform_create(self, serializer):
-        produit = serializer.save()
-        logger.info("Produit créé : %s (par %s)", produit.nom, self.request.user.email)
+        try:
+            produit = serializer.save()
+            logger.info("Produit créé : %s (par %s)", produit.nom, self.request.user.email)
+        except ValidationError as e:
+            logger.error("Erreur de validation lors de la création du produit: %s", e)
+            raise
+        except Exception as e:
+            logger.exception("Erreur inattendue lors de la création du produit")
+            raise
 
     def perform_update(self, serializer):
-        produit = serializer.save()
-        logger.info("Produit mis à jour : %s (par %s)", produit.nom, self.request.user.email)
+        try:
+            produit = serializer.save()
+            logger.info("Produit mis à jour : %s (par %s)", produit.nom, self.request.user.email)
+        except ValidationError as e:
+            logger.error("Erreur de validation lors de la mise à jour du produit: %s", e)
+            raise
+        except Exception as e:
+            logger.exception("Erreur inattendue lors de la mise à jour du produit")
+            raise
 
     def perform_destroy(self, instance):
         # Soft delete : désactiver au lieu de supprimer
         instance.is_active = False
         instance.save()
         logger.info("Produit désactivé : %s (par %s)", instance.nom, self.request.user.email)
+
+
+# ─── VARIANTES DE PRODUITS ────────────────────────────────────
+class VarianteProduitViewSet(viewsets.ModelViewSet):
+    """CRUD des variantes de produits. Admin uniquement pour écriture."""
+    queryset = VarianteProduit.objects.select_related("produit").all()
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ["produit", "is_active"]
+    ordering_fields = ["prix", "contenance_ml", "stock"]
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [AllowAny()]
+        return [IsAdminRole()]
+
+    def get_serializer_class(self):
+        if self.action in ("create", "update", "partial_update"):
+            return VarianteProduitWriteSerializer
+        return VarianteProduitSerializer
+
+    def perform_create(self, serializer):
+        variante = serializer.save()
+        logger.info(
+            "Variante créée : %s - %sml (par %s)",
+            variante.produit.nom, variante.contenance_ml, self.request.user.email,
+        )
+
+    def perform_update(self, serializer):
+        variante = serializer.save()
+        logger.info(
+            "Variante mise à jour : %s - %sml (par %s)",
+            variante.produit.nom, variante.contenance_ml, self.request.user.email,
+        )
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save()
+        logger.info(
+            "Variante désactivée : %s - %sml (par %s)",
+            instance.produit.nom, instance.contenance_ml, self.request.user.email,
+        )
+
+
+# ─── IMAGES PRODUITS ──────────────────────────────────────────
+class ProduitImageViewSet(viewsets.ModelViewSet):
+    """CRUD des images produit. Admin uniquement pour écriture."""
+    queryset = ProduitImage.objects.select_related("produit").all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["produit"]
+    parser_classes = [MultiPartParser, JSONParser]
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [AllowAny()]
+        return [IsAdminRole()]
+
+    def get_serializer_class(self):
+        if self.action in ("create", "update", "partial_update"):
+            return ProduitImageWriteSerializer
+        return ProduitImageSerializer
+
+    def perform_create(self, serializer):
+        image = serializer.save()
+        logger.info("Image ajoutée au produit %s (par %s)", image.produit.nom, self.request.user.email)
+
+    def perform_destroy(self, instance):
+        instance.delete()
 
 
 # ─── SIGNALEMENT EFFETS INDÉSIRABLES (Obligation ABMed) ─────

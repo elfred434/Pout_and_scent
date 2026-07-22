@@ -169,30 +169,39 @@ class Produit(TimeStampedModel):
 
         # ─── Validation ABMed : vérifier la liste noire ───
         if self.nom and self.marque:
-            nom_lower = self.nom.lower().strip()
-            marque_lower = self.marque.lower().strip()
-            produits_interdits = ProduitInterdit.objects.filter(is_active=True)
-            for interdit in produits_interdits:
-                nom_interdit = interdit.nom_produit.lower().strip()
-                marque_interdite = interdit.marque.lower().strip() if interdit.marque else ""
-                # Vérifier si le produit correspond à un produit interdit
-                if nom_interdit in nom_lower or nom_lower in nom_interdit:
-                    if not marque_interdite or marque_interdite in marque_lower or marque_lower in marque_interdite:
-                        raise ValidationError(
-                            f"❌ PRODUIT INTERDIT par l'ABMed : '{self.marque} - {self.nom}' "
-                            f"correspond au produit interdit '{interdit.nom_produit}'. "
-                            f"Motif : {interdit.motif_interdiction}. "
-                            f"Réf. : Communiqué ABMed du {interdit.date_interdiction}."
-                        )
+            try:
+                nom_lower = self.nom.lower().strip()
+                marque_lower = self.marque.lower().strip()
+                produits_interdits = ProduitInterdit.objects.filter(is_active=True)
+                for interdit in produits_interdits:
+                    nom_interdit = interdit.nom_produit.lower().strip()
+                    marque_interdite = interdit.marque.lower().strip() if interdit.marque else ""
+                    # Vérifier si le produit correspond à un produit interdit
+                    if nom_interdit in nom_lower or nom_lower in nom_interdit:
+                        if not marque_interdite or marque_interdite in marque_lower or marque_lower in marque_interdite:
+                            raise ValidationError(
+                                f"❌ PRODUIT INTERDIT par l'ABMed : '{self.marque} - {self.nom}' "
+                                f"correspond au produit interdit '{interdit.nom_produit}'. "
+                                f"Motif : {interdit.motif_interdiction}. "
+                                f"Réf. : Communiqué ABMed du {interdit.date_interdiction}."
+                            )
+            except ProduitInterdit.DoesNotExist:
+                logger.warning("Table ProduitInterdit non disponible, vérification ABMed ignorée")
+            except Exception as e:
+                logger.warning("Erreur lors de la vérification ABMed: %s", e)
 
         # ─── Validation : produits cosmétiques doivent avoir une AMM ───
-        if self.categorie and self.categorie.type == "COSMETIQUE" and self.is_active:
-            if not self.amm_number:
-                logger.warning(
-                    "Produit cosmétique '%s' sans AMM — "
-                    "Conformité Arrêté du 18/01/2022 non vérifiée",
-                    self.nom,
-                )
+        try:
+            if self.categorie_id and self.is_active:
+                cat = self.categorie if hasattr(self.categorie, 'type') else Categorie.objects.get(pk=self.categorie_id)
+                if cat.type == "COSMETIQUE" and not self.amm_number:
+                    logger.warning(
+                        "Produit cosmétique '%s' sans AMM — "
+                        "Conformité Arrêté du 18/01/2022 non vérifiée",
+                        self.nom,
+                    )
+        except Exception as e:
+            logger.warning("Erreur lors de la vérification AMM: %s", e)
 
     def _slug_needs_update(self):
         if not self.pk:
