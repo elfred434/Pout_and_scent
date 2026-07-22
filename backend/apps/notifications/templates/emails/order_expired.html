@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial; color: #333;">
+  <h2>Commande expirée</h2>
+  <p>Bonjour {{ commande.user.full_name }},</p>
+  <p>Votre commande <strong>#{{ commande.id|truncatechars:16 }}</strong> n'a pas été livrée dans les 72h.</p>
+  <p>Elle a été automatiquement annulée et le stock a été réapprovisionné.</p>
+  <p>Nous vous invitons à passer une nouvelle commande si vous le souhaitez.</p>
+  <p>L'équipe Pout & Scent</p>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial; color: #333;">
+  <h2>Merci pour votre commande !</h2>
+  <p>Bonjour {{ commande.user.full_name }},</p>
+  <p>Votre commande <strong>#{{ commande.id|truncatechars:16 }}</strong> a bien été enregistrée.</p>
+  <p><strong>Montant :</strong> {{ commande.montant_reduit }} XOF</p>
+  <p><strong>Livraison :</strong> {{ commande.adresse }}</p>
+  <p><strong>Paiement :</strong> à la livraison</p>
+  <p><em>Attention : si la livraison n'est pas effectuée sous 72h, la commande sera automatiquement annulée et le stock réapprovisionné.</em></p>
+  <p>L'équipe Pout & Scent</p>
+</body>
+</html>

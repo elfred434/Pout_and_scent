@@ -1,0 +1,77 @@
+# ============================================================
+# .gitignore — Pout & Scent
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# --- Environnements virtuels ---
+.venv/
+venv/
+env/
+
+# --- Variables d'environnement ---
+.env
+.env.local
+.env.*.local
+
+# --- Base de données ---
+db.sqlite3
+db.sqlite3-journal
+
+# --- Fichiers statiques collectés ---
+staticfiles/
+media/
+
+# --- Logs ---
+logs/
+*.log
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Node.js ---
+node_modules/
+npm-debug.log*
+
+# --- Build frontend ---
+frontend/dist/
+
+# --- Coverage ---
+coverage/
+htmlcov/
+.coverage
+
+# --- Cache ---
+.cache/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- Fichiers temporaires ---
+*.patch
+*.bak
+*.tmp
+screenshot-*.png
+
+# --- Secrets ---
+*.pem
+*.key
