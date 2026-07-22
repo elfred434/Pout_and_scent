@@ -1,9 +1,20 @@
 <!DOCTYPE html>
-<html>
-<body style="font-family: Arial; color: #333;">
-  <h2>Code de vérification</h2>
-  <p>Votre code OTP est : <strong>{{ code }}</strong></p>
-  <p>Ce code est valable 5 minutes.</p>
-  <p>L'équipe Pout & Scent</p>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Code OTP</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
+        <h2 style="color: #2c3e50;">Votre code de vérification</h2>
+        <div style="background: #e7f3ff; padding: 30px; border-radius: 10px; margin: 30px 0;">
+            <p style="font-size: 48px; font-weight: bold; letter-spacing: 10px; color: #2c3e50;">{{ code }}</p>
+        </div>
+        <p>Ce code est valable pendant 5 minutes.</p>
+        <p style="color: #7f8c8d; font-size: 14px;">
+            Si vous n'avez pas demandé ce code, ignorez cet email.
+        </p>
+        <p>Cordialement,<br>L'équipe Pout & Scent</p>
+    </div>
 </body>
 </html>

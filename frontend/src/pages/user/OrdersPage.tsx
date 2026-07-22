@@ -1,16 +1,33 @@
-/**
- * ORDERS PAGE — Historique des commandes
- * Pout & Scent
- *
- * Utilise le hook useOrders centralisé.
- */
+// ============================================================
+// ORDERS PAGE — Historique des commandes (CORRIGÉ)
+// ============================================================
 import { Link } from 'react-router-dom';
-import { useOrders } from '@/hooks/useOrders';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/api/client';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ShoppingBag, Package, Truck, CheckCircle, XCircle, Clock } from 'lucide-react';
 
-const statutConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
+interface LigneCommande {
+  id: string;
+  variante?: {
+    produit?: { nom: string; marque: string };
+    contenance_ml?: number;
+  };
+  quantite: number;
+  prix_unitaire: string;
+  sous_total: string;
+}
+
+interface Commande {
+  id: string;
+  statut: 'EN_PREPARATION' | 'EN_LIVRAISON' | 'LIVREE' | 'ANNULEE' | 'EXPIREE';
+  montant_total: string;
+  created_at: string;
+  lignes: LigneCommande[];
+}
+
+const statutConfig = {
   EN_PREPARATION: { label: 'En préparation', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   EN_LIVRAISON: { label: 'En livraison', color: 'bg-blue-100 text-blue-700', icon: Truck },
   LIVREE: { label: 'Livrée', color: 'bg-green-100 text-green-700', icon: CheckCircle },
@@ -19,9 +36,16 @@ const statutConfig: Record<string, { label: string; color: string; icon: typeof 
 };
 
 export function OrdersPage() {
-  const { data, isLoading, isError } = useOrders();
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['orders'],
+    queryFn: async () => {
+      const response = await apiClient.get('/v1/orders/');
+      // ✅ GESTION DE LA PAGINATION DRF
+      return response.data?.results || response.data;
+    },
+  });
 
-  const orders: any[] = Array.isArray(data) ? data : data?.results || [];
+  const orders = (data || []) as Commande[];
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -40,7 +64,7 @@ export function OrdersPage() {
 
       {orders.length > 0 ? (
         <div className="space-y-4">
-          {orders.map((order: any) => {
+          {orders.map((order) => {
             const config = statutConfig[order.statut] || statutConfig.EN_PREPARATION;
             const StatusIcon = config.icon;
 
@@ -70,13 +94,13 @@ export function OrdersPage() {
                   </span>
                 </div>
 
+                {/* ✅ SÉCURITÉ SUR LES LIGNES */}
                 {order.lignes && order.lignes.length > 0 && (
                   <div className="border-t pt-3 space-y-2">
-                    {order.lignes.slice(0, 3).map((ligne: any) => (
+                    {order.lignes.slice(0, 3).map((ligne) => (
                       <div key={ligne.id} className="flex justify-between text-sm">
                         <span className="text-gray-700">
-                          {ligne.quantite}x {ligne.variante?.produit?.marque || 'Produit'} -{' '}
-                          {ligne.variante?.produit?.nom || 'Nom inconnu'} ({ligne.variante?.contenance_ml || '?'} ml)
+                          {ligne.quantite}x {ligne.variante?.produit?.marque || 'Produit'} - {ligne.variante?.produit?.nom || 'Nom inconnu'} ({ligne.variante?.contenance_ml || '?'} ml)
                         </span>
                         <span className="font-medium">
                           {parseFloat(ligne.sous_total).toLocaleString('fr-FR')} FCFA
@@ -84,7 +108,9 @@ export function OrdersPage() {
                       </div>
                     ))}
                     {order.lignes.length > 3 && (
-                      <p className="text-xs text-gray-500">+ {order.lignes.length - 3} autre(s) article(s)</p>
+                      <p className="text-xs text-gray-500">
+                        + {order.lignes.length - 3} autre(s) article(s)
+                      </p>
                     )}
                   </div>
                 )}
@@ -92,7 +118,7 @@ export function OrdersPage() {
                 <div className="border-t mt-3 pt-3 flex justify-between items-center">
                   <span className="text-sm text-gray-600">Total</span>
                   <span className="text-lg font-bold text-purple-600">
-                    {parseFloat(order.montant_total || order.montant_reduit || '0').toLocaleString('fr-FR')} FCFA
+                    {parseFloat(order.montant_total).toLocaleString('fr-FR')} FCFA
                   </span>
                 </div>
               </div>
@@ -104,7 +130,10 @@ export function OrdersPage() {
           <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
           <p className="text-gray-600 mb-4">Vous n'avez pas encore de commandes</p>
           <Link to="/catalogue">
-            <Button><ShoppingBag className="h-4 w-4 mr-2" />Découvrir nos produits</Button>
+            <Button>
+              <ShoppingBag className="h-4 w-4 mr-2" />
+              Découvrir nos produits
+            </Button>
           </Link>
         </div>
       )}

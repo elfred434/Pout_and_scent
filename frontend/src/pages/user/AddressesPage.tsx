@@ -1,20 +1,23 @@
-/**
- * ADDRESSES PAGE — Gestion des adresses de livraison
- * Pout & Scent
- *
- * Utilise les hooks TanStack Query centralisés : useAddresses, useCreateAddress, etc.
- */
+// ============================================================
+// ADDRESSES PAGE — Gestion des adresses de livraison
+// ============================================================
 import { useState } from 'react';
-import {
-  useAddresses,
-  useCreateAddress,
-  useUpdateAddress,
-  useDeleteAddress,
-} from '@/hooks/useAddresses';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '@/api/client';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { MapPin, Phone, Home, Plus, Edit2, Trash2 } from 'lucide-react';
+
+interface Adresse {
+  id: string;
+  libelle: string;
+  ville: string;
+  quartier: string;
+  indications: string;
+  telephone_contact: string;
+  is_default: boolean;
+}
 
 interface AdresseFormData {
   libelle: string;
@@ -35,16 +38,53 @@ const initialForm: AdresseFormData = {
 };
 
 export function AddressesPage() {
-  const { data: addresses = [], isLoading } = useAddresses();
-  const createMutation = useCreateAddress();
-  const updateMutation = useUpdateAddress();
-  const deleteMutation = useDeleteAddress();
-
+  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<AdresseFormData>(initialForm);
 
-  const handleEdit = (address: any) => {
+  // ✅ GESTION DE LA PAGINATION
+  const { data, isLoading } = useQuery({
+    queryKey: ['addresses'],
+    queryFn: async () => {
+      const response = await apiClient.get('/v1/users/addresses/');
+      // ✅ Si paginé, extraire results, sinon retourner directement
+      return response.data?.results || response.data;
+    },
+  });
+
+  const addresses = (data || []) as Adresse[];
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: AdresseFormData) => {
+      if (editingId) {
+        await apiClient.put(`/v1/users/addresses/${editingId}/`, data);
+      } else {
+        await apiClient.post('/v1/users/addresses/', data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] });
+      setShowForm(false);
+      setEditingId(null);
+      setFormData(initialForm);
+    },
+    onError: (error: any) => {
+      console.error('Erreur sauvegarde adresse:', error.response?.data);
+      alert('Erreur: ' + JSON.stringify(error.response?.data || error.message));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiClient.delete(`/v1/users/addresses/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] });
+    },
+  });
+
+  const handleEdit = (address: Adresse) => {
     setFormData({
       libelle: address.libelle,
       ville: address.ville,
@@ -59,21 +99,7 @@ export function AddressesPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (editingId) {
-      updateMutation.mutate(
-        { id: editingId, data: formData },
-        { onSuccess: () => resetForm() }
-      );
-    } else {
-      createMutation.mutate(formData, { onSuccess: () => resetForm() });
-    }
-  };
-
-  const resetForm = () => {
-    setShowForm(false);
-    setEditingId(null);
-    setFormData(initialForm);
+    saveMutation.mutate(formData);
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -129,7 +155,9 @@ export function AddressesPage() {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Indications</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Indications
+            </label>
             <textarea
               value={formData.indications}
               onChange={(e) => setFormData({ ...formData, indications: e.target.value })}
@@ -150,15 +178,18 @@ export function AddressesPage() {
           </label>
 
           <div className="flex gap-3 pt-2">
-            <Button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {createMutation.isPending || updateMutation.isPending
-                ? 'Enregistrement...'
-                : 'Enregistrer'}
+            <Button type="submit" disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
-            <Button type="button" variant="outline" onClick={resetForm}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+                setFormData(initialForm);
+              }}
+            >
               Annuler
             </Button>
           </div>
@@ -167,7 +198,7 @@ export function AddressesPage() {
 
       <div className="space-y-3">
         {addresses.length > 0 ? (
-          addresses.map((address: any) => (
+          addresses.map((address) => (
             <div
               key={address.id}
               className={`p-4 border-2 rounded-lg transition-colors ${
@@ -187,9 +218,13 @@ export function AddressesPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">{address.quartier}, {address.ville}</p>
+                  <p className="text-sm text-gray-600">
+                    {address.quartier}, {address.ville}
+                  </p>
                   {address.indications && (
-                    <p className="text-sm text-gray-500 mt-1 italic">{address.indications}</p>
+                    <p className="text-sm text-gray-500 mt-1 italic">
+                      {address.indications}
+                    </p>
                   )}
                   <div className="flex items-center gap-1 mt-1 text-sm text-gray-600">
                     <Phone className="h-3 w-3" />

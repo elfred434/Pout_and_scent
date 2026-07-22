@@ -1,3 +1,4 @@
+
 import { apiClient } from './client';
 import type {
   PaginatedResponse,
@@ -5,122 +6,115 @@ import type {
   Categorie,
   Adresse,
   Commande,
+  AuthTokens,
   LoginPayload,
   RegisterPayload,
   CheckoutPayload,
   User,
   Promotion,
   Avis,
-  LoginResponse,
-  Conversation,
-  ChatMessage,
-  CreateConversationPayload,
-  SendMessagePayload,
 } from '@/types';
 
+// Authentification
 export const authEndpoints = {
   login: (data: LoginPayload) =>
-    apiClient.post<LoginResponse>('/auth/login/', data),
+    apiClient.post<AuthTokens>('/auth/login/', data),
 
   register: (data: RegisterPayload) =>
-    apiClient.post<LoginResponse>('/auth/register/', data),
+    apiClient.post<AuthTokens>('/auth/register/', data),
 
-  logout: (data?: { refresh?: string }) =>
-    apiClient.post('/auth/logout/', data || {}),
+  logout: () =>
+    apiClient.post('/auth/logout/'),
 
   me: () =>
     apiClient.get<User>('/auth/me/'),
 
-  refresh: (refresh: string) =>
-    apiClient.post<{ access: string }>('/auth/refresh/', { refresh }),
+  resetPassword: (email: string) =>
+    apiClient.post('/auth/password/reset/', { email }),
 
-  verify2FA: (data: { temp_token: string; otp_code: string } | { token: string }) =>
-    apiClient.post<LoginResponse>('/auth/2fa/verify/', data),
+  resetPasswordConfirm: (token: string, newPassword: string) =>
+    apiClient.post('/auth/password/reset/confirm/', {
+      token,
+      new_password: newPassword,
+    }),
+      // 🆕 Vérification 2FA (admin)
+  verify2FA: (data: { temp_token: string; otp_code: string }) =>
+    apiClient.post<any>('/auth/2fa/verify/', data),
 
+  // 🆕 Demande de reset password (envoi email)
   passwordReset: (data: { email: string }) =>
     apiClient.post('/auth/password/reset/', data),
 
+  // 🆕 Confirmation du reset password (avec token)
   passwordResetConfirm: (data: {
     token: string;
-    new_password?: string;
-    password?: string;
-    password_confirm?: string;
+    password: string;
+    password_confirm: string;
   }) => apiClient.post('/auth/password/reset/confirm/', data),
-  
-  googleAuth: (data: { credential: string }) =>
-    apiClient.post<LoginResponse>('/auth/google/', data),
 };
 
-export type { LoginResponse, LoginPayload, RegisterPayload, User };
-
+// Catalogue
 export const catalogEndpoints = {
-  getProducts: (params?: any) =>
-    apiClient.get<PaginatedResponse<Produit>>('/v1/catalog/products/', { params }),
+  getProducts: (params?: {
+    page?: number;
+    page_size?: number;
+    categorie?: string;
+    marque?: string;
+    prix_min?: number;
+    prix_max?: number;
+    search?: string;
+    ordering?: string;
+  }) => apiClient.get<PaginatedResponse<Produit>>('/v1/catalog/products/', { params }),
+
   getProduct: (id: string) =>
     apiClient.get<Produit>(`/v1/catalog/products/${id}/`),
+
   getCategories: () =>
     apiClient.get<PaginatedResponse<Categorie>>('/v1/catalog/categories/'),
-  getCategory: (id: string) =>
-    apiClient.get<Categorie>(`/v1/catalog/categories/${id}/`),
 };
 
+// Utilisateurs
 export const userEndpoints = {
   getAddresses: () =>
     apiClient.get<PaginatedResponse<Adresse>>('/v1/users/addresses/'),
-  createAddress: (data: Partial<Adresse>) =>
+
+  createAddress: (data: Omit<Adresse, 'id' | 'user'>) =>
     apiClient.post<Adresse>('/v1/users/addresses/', data),
+
   updateAddress: (id: string, data: Partial<Adresse>) =>
     apiClient.patch<Adresse>(`/v1/users/addresses/${id}/`, data),
+
   deleteAddress: (id: string) =>
     apiClient.delete(`/v1/users/addresses/${id}/`),
 };
 
+// Commandes
 export const orderEndpoints = {
   checkout: (data: CheckoutPayload) =>
     apiClient.post<Commande>('/v1/orders/checkout/', data),
-  getMyOrders: (params?: { page?: number }) =>
-    apiClient.get<PaginatedResponse<Commande>>('/v1/orders/', { params }),
+
+  getMyOrders: () =>
+    apiClient.get<PaginatedResponse<Commande>>('/v1/orders/'),
+
   getOrder: (id: string) =>
     apiClient.get<Commande>(`/v1/orders/${id}/`),
-  cancelOrder: (id: string) =>
-    apiClient.post<Commande>(`/v1/orders/${id}/cancel/`),
-  transitionOrder: (id: string, statut: string) =>
-    apiClient.post<Commande>(`/v1/orders/${id}/transition/`, { statut }),
 };
 
+// Promotions
 export const promotionEndpoints = {
-  getActivePromotions: (params?: any) =>
+  getActivePromotions: () =>
     apiClient.get<PaginatedResponse<Promotion>>('/v1/promotions/', {
-      params: { is_active: true, ...params },
+      params: { is_active: true },
     }),
-  getPromotion: (id: string) =>
-    apiClient.get<Promotion>(`/v1/promotions/${id}/`),
 };
 
+// Avis
 export const reviewEndpoints = {
-  getProductReviews: (productId: string, params?: any) =>
+  getProductReviews: (productId: string) =>
     apiClient.get<PaginatedResponse<Avis>>('/v1/reviews/', {
-      params: { produit: productId, ...params },
+      params: { produit: productId },
     }),
+
   createReview: (data: { produit: string; note: number; commentaire: string }) =>
     apiClient.post<Avis>('/v1/reviews/', data),
-  getMyReviews: () =>
-    apiClient.get<PaginatedResponse<Avis>>('/v1/reviews/'),
-};
-
-export const chatEndpoints = {
-  getConversations: (params?: { statut?: string; page?: number }) =>
-    apiClient.get<PaginatedResponse<Conversation>>('/v1/chat/conversations/', { params }),
-  getConversation: (id: string) =>
-    apiClient.get<Conversation>(`/v1/chat/conversations/${id}/`),
-  createConversation: (data: CreateConversationPayload) =>
-    apiClient.post<Conversation>('/v1/chat/conversations/', data),
-  sendMessage: (conversationId: string, data: SendMessagePayload) =>
-    apiClient.post<ChatMessage>(`/v1/chat/conversations/${conversationId}/send/`, data),
-  getMessages: (conversationId: string) =>
-    apiClient.get<ChatMessage[]>(`/v1/chat/conversations/${conversationId}/messages/`),
-  closeConversation: (conversationId: string) =>
-    apiClient.post<Conversation>(`/v1/chat/conversations/${conversationId}/close/`),
-  markAsRead: (conversationId: string) =>
-    apiClient.post(`/v1/chat/conversations/${conversationId}/mark-read/`),
 };

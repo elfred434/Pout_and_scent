@@ -1,54 +1,58 @@
 import { Link } from 'react-router-dom';
+import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="bg-neutral-50 dark:bg-neutral-800 border-t border-neutral-100 dark:border-neutral-700 mt-24 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+    <footer className="bg-gray-900 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="md:col-span-1">
-            <Link to="/" className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-white">
-              Pout<span className="text-primary-600">.</span>Scent
-            </Link>
-            <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-              Parfumerie et cosmetique de qualite, livree partout au Benin.
+          <div className="col-span-1 md:col-span-1">
+            <h3 className="text-2xl font-bold text-primary-400 mb-4">Pout & Scent</h3>
+            <p className="text-gray-400 text-sm">
+              Votre destination privilégiée pour les parfums et cosmétiques de luxe.
             </p>
           </div>
 
-          {/* Boutique */}
+          {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Boutique</h3>
-            <ul className="space-y-3">
+            <h4 className="text-lg font-semibold mb-4">Liens Rapides</h4>
+            <ul className="space-y-2">
               <li>
-                <Link to="/catalogue" className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
-                  Collection
+                <Link to="/catalogue" className="text-gray-400 hover:text-white">
+                  Catalogue
                 </Link>
               </li>
               <li>
-                <Link to="/promotions" className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
+                <Link to="/promotions" className="text-gray-400 hover:text-white">
                   Promotions
+                </Link>
+              </li>
+              <li>
+                <Link to="/about" className="text-gray-400 hover:text-white">
+                  À Propos
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Customer Service */}
           <div>
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Support</h3>
-            <ul className="space-y-3">
+            <h4 className="text-lg font-semibold mb-4">Service Client</h4>
+            <ul className="space-y-2">
               <li>
-                <Link to="/mentions-legales" className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
-                  Mentions legales
+                <Link to="/faq" className="text-gray-400 hover:text-white">
+                  FAQ
                 </Link>
               </li>
               <li>
-                <Link to="/cgv" className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
-                  CGV
+                <Link to="/shipping" className="text-gray-400 hover:text-white">
+                  Livraison
                 </Link>
               </li>
               <li>
-                <Link to="/politique-confidentialite" className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
-                  Confidentialite
+                <Link to="/returns" className="text-gray-400 hover:text-white">
+                  Retours
                 </Link>
               </li>
             </ul>
@@ -56,28 +60,39 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-4">Contact</h3>
+            <h4 className="text-lg font-semibold mb-4">Contact</h4>
             <ul className="space-y-3">
-              <li className="text-sm text-neutral-600 dark:text-neutral-400">
+              <li className="flex items-center text-gray-400">
+                <Mail className="h-5 w-5 mr-2" />
                 contact@poutscent.bj
               </li>
-              <li className="text-sm text-neutral-600 dark:text-neutral-400">
+              <li className="flex items-center text-gray-400">
+                <Phone className="h-5 w-5 mr-2" />
                 +229 XX XX XX XX
               </li>
-              <li className="text-sm text-neutral-600 dark:text-neutral-400">
-                Cotonou, Benin
+              <li className="flex items-center text-gray-400">
+                <MapPin className="h-5 w-5 mr-2" />
+                Cotonou, Bénin
               </li>
             </ul>
+
+            {/* Social Media */}
+            <div className="flex space-x-4 mt-4">
+              <a href="#" className="text-gray-400 hover:text-white">
+                <Facebook className="h-6 w-6" />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white">
+                <Instagram className="h-6 w-6" />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white">
+                <Twitter className="h-6 w-6" />
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-neutral-200 dark:border-neutral-700 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            © {new Date().getFullYear()} Pout & Scent. Tous droits reserves.
-          </p>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Conforme au Code du numerique beninois
-          </p>
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
+          <p>&copy; {new Date().getFullYear()} Pout & Scent. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

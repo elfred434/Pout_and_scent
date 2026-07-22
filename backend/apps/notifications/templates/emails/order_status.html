@@ -1,10 +1,23 @@
 <!DOCTYPE html>
-<html>
-<body style="font-family: Arial; color: #333;">
-  <h2>Statut de votre commande</h2>
-  <p>Bonjour {{ commande.user.full_name }},</p>
-  <p>Le statut de votre commande <strong>#{{ commande.id|truncatechars:16 }}</strong> a changé.</p>
-  <p><strong>Nouveau statut :</strong> {{ commande.get_statut_display }}</p>
-  <p>L'équipe Pout & Scent</p>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Statut de commande</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2c3e50;">Mise à jour de votre commande</h2>
+        <p>Bonjour {{ commande.user.full_name }},</p>
+        <p>Le statut de votre commande <strong>#{{ commande.id|truncatechars:16 }}</strong> a été mis à jour.</p>
+        
+        <div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>Nouveau statut :</strong> {{ commande.get_statut_display }}</p>
+            {% if commande.date_livraison %}
+            <p><strong>Date de livraison :</strong> {{ commande.date_livraison|date:"d/m/Y H:i" }}</p>
+            {% endif %}
+        </div>
+        
+        <p>Cordialement,<br>L'équipe Pout & Scent</p>
+    </div>
 </body>
 </html>

@@ -1,282 +1,117 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Truck, Shield, Heart, Settings } from 'lucide-react';
+import { ArrowRight, Star, Truck, Shield, RefreshCw } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
-import { useActivePromotions } from '@/hooks/usePromotions';
-import { useAuth } from '@/contexts/AuthContext';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ProductCard } from '@/components/products/ProductCard';
-import { ProductSkeleton } from '@/components/products/ProductSkeleton';
 
 export function HomePage() {
-  const { data: productsData, isLoading } = useProducts({ page: 1 });
-  const { data: promosData } = useActivePromotions();
-  const { user, isAuthenticated } = useAuth();
-  const isAdmin = isAuthenticated && user?.role === 'ADMIN';
+  const { data: featuredProducts, isLoading } = useProducts({ page: 1 });
 
-  const products = productsData?.results?.slice(0, 4) || [];
-  const hasPromos = promosData?.results && promosData.results.length > 0;
+  const features = [
+    {
+      icon: Truck,
+      title: 'Livraison Rapide',
+      description: 'Livraison sous 72h partout au Bénin',
+    },
+    {
+      icon: Shield,
+      title: 'Produits Authentiques',
+      description: '100% originaux et certifiés',
+    },
+    {
+      icon: RefreshCw,
+      title: 'Retours Faciles',
+      description: 'Retour gratuit sous 7 jours',
+    },
+  ];
 
   return (
-    <div className="animate-fade-in">
-      {/* ═══ Bandeau Admin (visible uniquement pour les admins) ═══ */}
-      {isAdmin && (
-        <div className="bg-primary-600 text-white py-2 px-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
-            <Settings className="h-4 w-4" />
-            <Link 
-              to="/admin" 
-              className="text-sm font-medium hover:text-primary-100 transition-colors flex items-center gap-2"
-            >
-              Accéder au tableau de bord administrateur
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ Hero - Editorial avec dégradé + texture ═══ */}
-      <section className="relative bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-primary-900 overflow-hidden">
-        {/* Texture grain subtile */}
-        <div className="absolute inset-0 texture-grain pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <p className="text-tiny font-semibold text-primary-600 uppercase tracking-[0.2em]">
-                  Nouvelle collection
-                </p>
-                <h1 className="text-display-lg md:text-display-xl text-neutral-900 text-balance">
-                  L'art du parfum,{' '}
-                  <span className="text-primary-600">redefini.</span>
-                </h1>
-                <p className="text-subtitle text-neutral-600 max-w-lg leading-relaxed">
-                  Decouvrez notre selection exclusive de parfums et cosmetiques de qualite, 
-                  livres partout au Benin.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/catalogue" className="btn-primary group">
-                  Explorer la collection
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                {hasPromos && (
-                  <Link to="/promotions" className="btn-secondary">
-                    Voir les promotions
-                  </Link>
-                )}
-              </div>
-
-              {/* Trust indicators avec accent doré */}
-              <div className="flex flex-wrap gap-6 pt-4">
-                {[
-                  { icon: Shield, text: '100% Authentique' },
-                  { icon: Truck, text: 'Livraison 72h' },
-                  { icon: Heart, text: '+500 clientes' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-neutral-600">
-                    <item.icon className="h-4 w-4 text-accent-500" />
-                    <span>{item.text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Hero card avec dégradé + ombre + filigrane */}
-            <div className="relative">
-              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-hero">
-                {/* Dégradé violet → doré */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-100 via-primary-200 to-accent-100" />
-                
-                {/* Filigrane flacon */}
-                <div className="absolute inset-0 watermark-flacon" />
-                
-                {/* Texture grain */}
-                <div className="absolute inset-0 texture-grain" />
-
-                {/* Composition décorative */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative">
-                    {/* Flacon principal */}
-                    <div className="w-32 h-48 bg-white/30 backdrop-blur-sm rounded-2xl border border-white/40 shadow-xl flex items-center justify-center">
-                      <Sparkles className="h-12 w-12 text-primary-600/60" />
-                    </div>
-                    {/* Flacon secondaire */}
-                    <div className="absolute -bottom-4 -right-8 w-20 h-28 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg flex items-center justify-center rotate-6">
-                      <Sparkles className="h-6 w-6 text-accent-500/60" />
-                    </div>
-                    {/* Petit flacon */}
-                    <div className="absolute -top-2 -left-6 w-14 h-20 bg-white/25 backdrop-blur-sm rounded-lg border border-white/30 shadow-md flex items-center justify-center -rotate-12">
-                      <Sparkles className="h-4 w-4 text-primary-500/60" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ Bannière promos ═══ */}
-      {hasPromos && (
-        <section className="bg-primary-600 py-4">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <Link 
-              to="/promotions"
-              className="flex items-center justify-center gap-2 text-white text-sm font-medium hover:text-primary-100 transition-colors"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span>Promotions en cours - Jusqu'a -{promosData.results[0].valeur}%</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* ═══ Produits vedettes — fond gris ═══ */}
-      <section className="py-20 lg:py-24 bg-neutral-150 dark:bg-neutral-800">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-12">
-            <div>
-              <p className="text-tiny font-semibold text-primary-600 uppercase tracking-[0.2em] mb-2">
-                Selection
-              </p>
-              <h2 className="text-display text-neutral-900">
-                Nos <span className="text-primary-600">coups de coeur</span>
-              </h2>
-            </div>
-            <Link 
-              to="/catalogue" 
-              className="link-accent text-sm flex items-center gap-1 group"
-            >
-              Tout voir
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoading
-              ? Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={i} />)
-              : products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))
-            }
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ Section éditoriale — fond blanc ═══ */}
-      <section className="py-20 lg:py-24 bg-white dark:bg-neutral-900">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div className="aspect-square bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-2xl" />
-            
-            <div className="space-y-6">
-              <p className="text-tiny font-semibold text-primary-600 uppercase tracking-[0.2em]">
-                Notre promesse
-              </p>
-              <h2 className="text-display text-neutral-900 text-balance">
-                Qualite <span className="text-primary-600">sans compromis</span>
-              </h2>
-              <p className="text-body text-neutral-600 leading-relaxed">
-                Chaque produit de notre collection est soigneusement selectionne pour sa qualite 
-                exceptionnelle. Nous travaillons exclusivement avec des marques reconnues et des 
-                produits certifies conformes aux normes beninoises.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  'Produits 100% originaux et certifies',
-                  'Livraison rapide dans tout le Benin',
-                  'Service client disponible 7j/7',
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-accent-500" />
-                    <span className="text-sm text-neutral-700">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link to="/catalogue" className="btn-secondary inline-flex">
-                Decouvrir nos produits
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ Temoignages — fond gris ═══ */}
-      <section className="py-20 lg:py-24 bg-neutral-150 dark:bg-neutral-800">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <p className="text-tiny font-semibold text-primary-600 uppercase tracking-[0.2em] mb-2">
-              Temoignages
+    <div>
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-r from-primary-600 to-primary-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              Découvrez l'Excellence du Parfum
+            </h1>
+            <p className="text-xl md:text-2xl text-primary-100 mb-8 max-w-3xl mx-auto">
+              Une sélection exclusive de parfums et cosmétiques de luxe pour sublimer votre beauté
             </p>
-            <h2 className="text-display text-neutral-900">
-              Ce qu'elles <span className="text-primary-600">en disent</span>
-            </h2>
+            <Link
+              to="/catalogue"
+              className="inline-flex items-center bg-white text-primary-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors"
+            >
+              Explorer le Catalogue
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
           </div>
+        </div>
+      </section>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                text: "Parfums authentiques, livraison rapide. Je recommande vivement.",
-                name: 'Amina K.',
-              },
-              {
-                text: "Qualite irreprochable et service attentionne. Ma boutique preferee.",
-                name: 'Grace M.',
-              },
-              {
-                text: "Produits de qualite et prix tres corrects. Je suis conquise.",
-                name: 'Deborah A.',
-              },
-            ].map((testimonial, i) => (
-              <div key={i} className="card-static p-6 space-y-4">
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, j) => (
-                    <svg key={j} className="w-4 h-4 text-accent-500 fill-current" viewBox="0 0 20 20">
-                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-sm text-neutral-700 leading-relaxed">
-                  "{testimonial.text}"
-                </p>
-                <div className="flex items-center gap-3 pt-2">
-                  <div className="avatar text-xs">
-                    {testimonial.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <p className="text-sm font-medium text-neutral-900">
-                    {testimonial.name}
-                  </p>
-                </div>
+      {/* Features */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {features.map((feature) => (
+              <div key={feature.title} className="text-center p-6">
+                <feature.icon className="h-12 w-12 text-primary-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══ Newsletter — fond noir ═══ */}
-      <section className="py-20 lg:py-24 bg-neutral-900 text-white">
-        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center space-y-6">
-          <p className="text-tiny font-semibold text-accent-400 uppercase tracking-[0.2em]">
-            Newsletter
-          </p>
-          <h2 className="text-display text-white">
-            Restez <span className="text-accent-400">informee</span>
+      {/* Featured Products */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900">Produits Populaires</h2>
+            <Link
+              to="/catalogue"
+              className="text-primary-600 hover:text-primary-700 font-medium flex items-center"
+            >
+              Voir tout
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </div>
+
+          {isLoading ? (
+            <LoadingSpinner size="lg" />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts?.results.slice(0, 4).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+            Ce que disent nos clients
           </h2>
-          <p className="text-body text-neutral-400">
-            Inscrivez-vous pour recevoir nos offres exclusives et nos dernieres nouveautes.
-          </p>
-          <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="votre@email.com"
-              className="input flex-1 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:ring-primary-500"
-            />
-            <button type="submit" className="btn-accent whitespace-nowrap">
-              S'inscrire
-            </button>
-          </form>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-50 p-6 rounded-lg">
+                <div className="flex text-yellow-400 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="h-5 w-5 fill-current" />
+                  ))}
+                </div>
+                <p className="text-gray-700 mb-4">
+                  "Excellente qualité de service et produits authentiques. Je recommande vivement !"
+                </p>
+                <p className="font-semibold text-gray-900">Client Satisfait</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </div>

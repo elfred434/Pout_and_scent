@@ -1,9 +1,5 @@
-// ============================================================
-// LOGIN PAGE — Avec Google OAuth et 2FA
-// ============================================================
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -14,16 +10,18 @@ import { getRememberMe } from '@/lib/authStorage';
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, googleLogin, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
+  // ✅ État "Se souvenir de moi" (défaut: true)
   const [rememberMe, setRememberMe] = useState(getRememberMe());
   const [error, setError] = useState('');
 
+  // Redirection après login
   const from = (location.state as any)?.from?.pathname || '/';
 
   // Si déjà connecté, rediriger
@@ -32,51 +30,6 @@ export function LoginPage() {
     return null;
   }
 
-  // ✅ Handler pour Google Login
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-      setError('');
-      console.log('✅ Google credential received');
-      
-      await googleLogin.mutateAsync({
-        credential: credentialResponse.credential,
-      });
-      
-      navigate(from, { replace: true });
-    } catch (err: any) {
-      console.error('❌ Google login error:', err);
-      
-      // ✅ CORRECTION : Extraire le message correctement
-      let errorMessage = 'Erreur lors de la connexion avec Google';
-      
-      if (err.response?.data) {
-        const data = err.response.data;
-        
-        // Structure custom du backend : {success: false, error: {code, message, details}}
-        if (data.error?.message) {
-          errorMessage = data.error.message;
-        } 
-        // Structure DRF standard : {detail: "..."}
-        else if (data.detail) {
-          errorMessage = data.detail;
-        }
-        // Structure avec message direct : {message: "..."}
-        else if (data.message) {
-          errorMessage = data.message;
-        }
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-    }
-  };
-
-  const handleGoogleError = () => {
-    console.error('❌ Google Login Failed');
-    setError('Erreur lors de la connexion avec Google');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -84,7 +37,7 @@ export function LoginPage() {
     try {
       const response = await login.mutateAsync({
         ...formData,
-        rememberMe,
+        rememberMe, // ✅ Passer le choix
       });
 
       // ✅ Vérifier si le backend demande le 2FA
@@ -94,37 +47,32 @@ export function LoginPage() {
         return;
       }
 
+      // Sinon, login réussi
       navigate(from, { replace: true });
     } catch (err: any) {
-      console.error('❌ Login error:', err);
+      console.error('Login error:', err);
 
-      // ✅ CORRECTION : Extraire le message correctement
-      let errorMessage = 'Email ou mot de passe incorrect';
-      
+      // Gestion des erreurs
       if (err.response?.data) {
-        const data = err.response.data;
-        
-        // Structure custom du backend : {success: false, error: {code, message, details}}
-        if (data.error?.message) {
-          errorMessage = data.error.message;
-        }
-        // Structure avec error string
-        else if (typeof data.error === 'string') {
-          errorMessage = data.error;
-        }
-        // Structure DRF standard : {detail: "..."}
-        else if (data.detail) {
-          errorMessage = data.detail;
-        }
-        // Structure avec message direct
-        else if (data.message) {
-          errorMessage = data.message;
+        const errorData = err.response.data;
+        if (errorData.error) {
+          if (typeof errorData.error === 'string') {
+            setError(errorData.error);
+          } else if (errorData.error.detail) {
+            setError(errorData.error.detail);
+          } else {
+            setError('Email ou mot de passe incorrect');
+          }
+        } else if (errorData.detail) {
+          setError(errorData.detail);
+        } else {
+          setError('Email ou mot de passe incorrect');
         }
       } else if (err.message) {
-        errorMessage = err.message;
+        setError(err.message);
+      } else {
+        setError('Une erreur est survenue lors de la connexion');
       }
-      
-      setError(errorMessage);
     }
   };
 
@@ -146,39 +94,13 @@ export function LoginPage() {
           </p>
         </div>
 
-        {/* ✅ ERREUR */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {/* ✅ COMPOSANT Google Login */}
-        <div className="mt-6 flex justify-center">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            theme="outline"
-            size="large"
-            text="signin_with"
-            shape="rectangular"
-            locale="fr"
-          />
-        </div>
-
-        {/* Séparateur */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">
-              Ou avec email
-            </span>
-          </div>
-        </div>
-
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-4">
             <Input
               label="Email"
@@ -199,6 +121,7 @@ export function LoginPage() {
           </div>
 
           <div className="flex items-center justify-between">
+            {/* ✅ Checkbox "Se souvenir de moi" fonctionnelle */}
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"

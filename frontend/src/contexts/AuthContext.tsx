@@ -1,121 +1,73 @@
-/**
- * AuthContext — Gestion centralisée de l'authentification
- * Pout & Scent
- *
- * Utilise TanStack Query pour le user, et useMutation pour login/register/google.
- */
-import { createContext, useContext, ReactNode, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
+import { createContext, useContext, ReactNode } from 'react';
+import { useQuery, useMutation, UseMutationResult } from '@tanstack/react-query';
 import { authEndpoints } from '@/api/endpoints';
-import { queryKeys } from '@/lib/queryKeys';
-import { toast } from '@/components/common/ToastContainer';
-import { extractApiError } from '@/hooks/useToast';
-import type { LoginResponse, LoginPayload, RegisterPayload, User } from '@/types';
+import type { User, LoginPayload, RegisterPayload, LoginResponse } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import {
-  setTokens,
-  clearTokens,
-  getAccessToken,
-  getRememberMe,
-  getTokens,
-} from '@/lib/authStorage';
-
-// ─── Types ─────────────────────────────────────────────────
+import { setTokens, clearTokens, getAccessToken, getRememberMe } from '@/lib/authStorage';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: UseMutationResult<LoginResponse, Error, LoginPayload & { rememberMe?: boolean }>;
-  register: UseMutationResult<LoginResponse, Error, RegisterPayload>;
-  googleLogin: UseMutationResult<LoginResponse, Error, { credential: string }>;
+  register: UseMutationResult<any, Error, RegisterPayload>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// ─── Provider ──────────────────────────────────────────────
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  // Récupérer l'utilisateur connecté
+  // ✅ Récupérer le profil utilisateur si un token existe
   const { data: user, isLoading } = useQuery<User>({
-    queryKey: queryKeys.auth.user(),
+    queryKey: ['user'],
     queryFn: () => authEndpoints.me().then((res) => res.data),
     retry: false,
-    enabled: !!getAccessToken(),
-    staleTime: 5 * 60 * 1000, // 5 min
+    enabled: !!getAccessToken(), // ✅ Utiliser le helper
   });
 
-  // Login
+  // ✅ Login avec gestion du 2FA et "Se souvenir de moi"
   const login = useMutation<LoginResponse, Error, LoginPayload & { rememberMe?: boolean }>({
     mutationFn: (data) => {
       const { rememberMe, ...credentials } = data;
       return authEndpoints.login(credentials).then((res) => res.data);
     },
     onSuccess: (response, variables) => {
-      if (response.requires_2fa) return;
-
-      const tokens = response.data || response;
-      if ((tokens as any).access && (tokens as any).refresh) {
-        const rememberMe = variables.rememberMe ?? getRememberMe();
-        setTokens((tokens as any).access, (tokens as any).refresh, rememberMe);
-        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
+      // Si le backend demande le 2FA, ne pas stocker les tokens
+      if (response.requires_2fa) {
+        console.log('🔐 2FA required');
+        return; // Le LoginPage gérera la redirection
       }
-    },
-    onError: (error) => {
-      // Ne pas afficher de toast ici — la page login gère ses propres erreurs
-      // pour pouvoir rediriger vers 2FA si nécessaire
+
+      // Stocker les tokens selon le choix "Se souvenir de moi"
+      const tokens = response.data || response;
+      if (tokens.access && tokens.refresh) {
+        const rememberMe = variables.rememberMe ?? getRememberMe();
+        setTokens(tokens.access, tokens.refresh, rememberMe);
+        console.log(`✅ Login successful, tokens stored (${rememberMe ? 'localStorage' : 'sessionStorage'})`);
+      }
     },
   });
 
-  // Register
-  const register = useMutation<LoginResponse, Error, RegisterPayload>({
-    mutationFn: (data) =>
+  const register = useMutation({
+    mutationFn: (data: RegisterPayload) =>
       authEndpoints.register(data).then((res) => res.data),
     onSuccess: (response) => {
+      // Par défaut, on persiste pour l'inscription
       const tokens = response.data || response;
-      if ((tokens as any).access && (tokens as any).refresh) {
-        setTokens((tokens as any).access, (tokens as any).refresh, true);
-        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
-        toast.success('Compte créé avec succès !');
+      if (tokens.access && tokens.refresh) {
+        setTokens(tokens.access, tokens.refresh, true);
+        console.log('✅ Register successful, tokens stored (localStorage)');
       }
-    },
-    onError: (error) => {
-      // La page register gère ses propres erreurs pour afficher les erreurs de validation
     },
   });
 
-  // Google OAuth
-  const googleLogin = useMutation<LoginResponse, Error, { credential: string }>({
-    mutationFn: (data) =>
-      authEndpoints.googleAuth(data).then((res) => res.data),
-    onSuccess: (response) => {
-      const tokens = response.data || response;
-      if ((tokens as any).access && (tokens as any).refresh) {
-        setTokens((tokens as any).access, (tokens as any).refresh, true);
-        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
-        toast.success('Connexion Google réussie !');
-      }
-    },
-    onError: (error) => {
-      toast.error(extractApiError(error));
-    },
-  });
-
-  // Logout
-  const logout = useCallback(() => {
-    const { refresh } = getTokens();
-    if (refresh) {
-      authEndpoints.logout({ refresh }).catch(() => {});
-    }
-    clearTokens();
-    queryClient.clear();
+  const logout = () => {
+    clearTokens(); // ✅ Supprime des deux stockages
     navigate('/');
-    toast.info('Vous avez été déconnecté');
-  }, [navigate, queryClient]);
+    window.location.reload();
+  };
 
   const value: AuthContextType = {
     user: user || null,
@@ -123,14 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     login,
     register,
-    googleLogin,
     logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-// ─── Hook ──────────────────────────────────────────────────
 
 export function useAuth() {
   const context = useContext(AuthContext);

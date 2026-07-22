@@ -65,6 +65,13 @@ class Adresse(TimeStampedModel):
     telephone_contact = models.CharField(max_length=20)
     is_default = models.BooleanField(default=False)
     
+    def get_complete_address(self):
+        """Retourne l'adresse complète formatée."""
+        parts = [self.libelle, self.quartier, self.ville]
+        if self.indications:
+            parts.append(f"({self.indications})")
+        return ", ".join(parts)
+    
     class Meta:
         verbose_name = "Adresse"
         verbose_name_plural = "Adresses"

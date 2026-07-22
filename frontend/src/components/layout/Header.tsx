@@ -1,196 +1,171 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, User, Menu, X, Search, Sun, Moon } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Menu, X } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
-import { useTheme } from '@/contexts/ThemeContext';
-
-const nav = [
-  { name: 'Collection', href: '/catalogue' },
-  { name: 'Promotions', href: '/promotions' },
-];
 
 export function Header() {
-  const [open, setOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
   const { totalItems } = useCart();
   const location = useLocation();
-  const { theme, toggleTheme } = useTheme();
+
+  const navigation = [
+    { name: 'Accueil', href: '/' },
+    { name: 'Catalogue', href: '/catalogue' },
+    { name: 'Promotions', href: '/promotions' },
+  ];
 
   return (
-    <>
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-100 dark:border-neutral-800">
-        <nav className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <span className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-white">
-                Pout<span className="text-primary-600">.</span>Scent
-              </span>
+    <header className="bg-white shadow-sm sticky top-0 z-50">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link to="/" className="flex-shrink-0 flex items-center">
+              <h1 className="text-2xl font-bold text-primary-600">Pout & Scent</h1>
             </Link>
-
-            {/* Desktop nav */}
-            <div className="hidden md:flex items-center gap-8">
-              {nav.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={`text-sm font-medium transition-colors ${
-                    location.pathname === item.href
-                      ? 'text-neutral-900 dark:text-white'
-                      : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
-
-            {/* Desktop actions */}
-            <div className="hidden md:flex items-center gap-4">
-              {/* Theme toggle */}
-              <button 
-                onClick={toggleTheme}
-                className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </button>
-
-              <button className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
-                <Search className="h-5 w-5" />
-              </button>
-
-              <Link 
-                to="/panier" 
-                className="relative p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
-              >
-                <ShoppingBag className="h-5 w-5" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-primary-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                )}
-              </Link>
-
-              {isAuthenticated ? (
-                <div className="flex items-center gap-2">
-                  <Link 
-                    to="/profil" 
-                    className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
-                  >
-                    <User className="h-5 w-5" />
-                  </Link>
-                  <button 
-                    onClick={logout}
-                    className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
-                  >
-                    Deconnexion
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Link 
-                    to="/connexion" 
-                    className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
-                  >
-                    Connexion
-                  </Link>
-                  <Link to="/inscription" className="btn-primary text-sm py-2 px-4">
-                    Creer un compte
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setOpen(!open)}
-              className="md:hidden p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
-            >
-              {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
           </div>
-        </nav>
-      </header>
 
-      {/* Mobile menu */}
-      {open && (
-        <div className="md:hidden fixed inset-0 z-40 bg-white dark:bg-neutral-900 pt-16">
-          <div className="px-6 py-8 space-y-6">
-            {/* Theme toggle mobile */}
-            <button 
-              onClick={toggleTheme}
-              className="flex items-center gap-3 text-lg text-neutral-900 dark:text-white"
-            >
-              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              {theme === 'light' ? 'Mode sombre' : 'Mode clair'}
-            </button>
-
-            {nav.map((item) => (
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            {navigation.map((item) => (
               <Link
-                key={item.href}
+                key={item.name}
                 to={item.href}
-                onClick={() => setOpen(false)}
-                className="block text-2xl font-semibold text-neutral-900 dark:text-white"
+                className={`text-sm font-medium transition-colors ${
+                  location.pathname === item.href
+                    ? 'text-primary-600'
+                    : 'text-gray-700 hover:text-primary-600'
+                }`}
               >
                 {item.name}
               </Link>
             ))}
+          </div>
 
-            <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800 space-y-4">
-              <Link 
-                to="/panier" 
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 text-lg text-neutral-900 dark:text-white"
+          {/* User Actions */}
+          <div className="hidden md:flex items-center space-x-4">
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/panier"
+                  className="relative p-2 text-gray-700 hover:text-primary-600"
+                >
+                  <ShoppingCart className="h-6 w-6" />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {totalItems}
+                    </span>
+                  )}
+                </Link>
+
+                <Link
+                  to="/profil"
+                  className="p-2 text-gray-700 hover:text-primary-600"
+                >
+                  <User className="h-6 w-6" />
+                </Link>
+
+                <button
+                  onClick={logout}
+                  className="p-2 text-gray-700 hover:text-red-600"
+                  title="Déconnexion"
+                >
+                  <LogOut className="h-6 w-6" />
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/connexion"
+                  className="text-gray-700 hover:text-primary-600 font-medium"
+                >
+                  Connexion
+                </Link>
+                <Link
+                  to="/inscription"
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700"
+                >
+                  Inscription
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-700 hover:text-primary-600"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 space-y-4">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="block text-gray-700 hover:text-primary-600 font-medium"
+                onClick={() => setIsMenuOpen(false)}
               >
-                <ShoppingBag className="h-5 w-5" />
-                Panier
-                {totalItems > 0 && (
-                  <span className="bg-primary-600 text-white text-xs font-semibold rounded-full w-6 h-6 flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                )}
+                {item.name}
               </Link>
-
+            ))}
+            <div className="border-t pt-4 space-y-2">
               {isAuthenticated ? (
                 <>
-                  <Link 
-                    to="/profil" 
-                    onClick={() => setOpen(false)}
-                    className="block text-lg text-neutral-900 dark:text-white"
+                  <Link
+                    to="/panier"
+                    className="block text-gray-700 hover:text-primary-600"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    Mon compte
+                    Panier ({totalItems})
                   </Link>
-                  <button 
-                    onClick={() => { logout(); setOpen(false); }}
-                    className="block text-lg text-red-600"
+                  <Link
+                    to="/profil"
+                    className="block text-gray-700 hover:text-primary-600"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    Deconnexion
+                    Mon Compte
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full text-left text-red-600 font-medium"
+                  >
+                    Déconnexion
                   </button>
                 </>
               ) : (
                 <>
-                  <Link 
-                    to="/connexion" 
-                    onClick={() => setOpen(false)}
-                    className="block text-lg text-neutral-900 dark:text-white"
+                  <Link
+                    to="/connexion"
+                    className="block text-gray-700 hover:text-primary-600 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     Connexion
                   </Link>
-                  <Link 
-                    to="/inscription" 
-                    onClick={() => setOpen(false)}
-                    className="btn-primary w-full text-center"
+                  <Link
+                    to="/inscription"
+                    className="block bg-primary-600 text-white px-4 py-2 rounded-lg font-medium text-center"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    Creer un compte
+                    Inscription
                   </Link>
                 </>
               )}
             </div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </nav>
+    </header>
   );
 }

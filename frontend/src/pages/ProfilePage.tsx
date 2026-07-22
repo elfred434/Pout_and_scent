@@ -1,202 +1,231 @@
-import { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { User, MapPin, ShoppingBag, Lock, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+// ============================================================
+// PROFILE PAGE — Layout profil avec sidebar + sous-pages
+// ============================================================
+import { useState } from 'react'; // ✅ AJOUTER CET IMPORT
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '@/api/client';
+import { Button } from '@/components/common/Button';
+import { Input } from '@/components/common/Input';
+import { User, MapPin, ShoppingBag, Lock, LogOut, Mail, Phone } from 'lucide-react';
 
-const sidebarItems = [
-  { name: 'Informations', href: '/profil', icon: User, end: true },
-  { name: 'Adresses', href: '/profil/adresses', icon: MapPin },
-  { name: 'Commandes', href: '/profil/commandes', icon: ShoppingBag },
-  { name: 'Securite', href: '/profil/securite', icon: Lock },
-];
+// ============================================================
+// TYPES
+// ============================================================
+interface UserData {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  telephone: string;
+  role: string;
+}
 
+// ============================================================
+// PROFILE PAGE — Layout principal avec sidebar
+// ============================================================
 export function ProfilePage() {
-  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // Générer les initiales pour l'avatar
-  const initials = user?.first_name && user?.last_name
-    ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
-    : user?.email?.[0]?.toUpperCase() || 'U';
+  const { data: user, isLoading } = useQuery<UserData>({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const response = await apiClient.get('/auth/me/');
+      return response.data;
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      navigate('/');
+      window.location.reload();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+        <p className="text-gray-500">Chargement...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+        <p className="text-gray-500">Vous devez être connecté.</p>
+        <Link to="/connexion" className="text-purple-600 hover:underline mt-4 inline-block">
+          Se connecter
+        </Link>
+      </div>
+    );
+  }
+
+  const navItems = [
+    { to: '/profil', label: 'Informations', icon: User, end: true },
+    { to: '/profil/adresses', label: 'Adresses', icon: MapPin },
+    { to: '/profil/commandes', label: 'Commandes', icon: ShoppingBag },
+    { to: '/profil/securite', label: 'Sécurité', icon: Lock },
+  ];
 
   return (
-    <div className="min-h-screen">
-      {/* ═══ Header — fond blanc ═══ */}
-      <section className="bg-white dark:bg-neutral-900 py-12 border-b border-neutral-100 dark:border-neutral-800">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center gap-6">
-            {/* Avatar avec initiales */}
-            <div className="avatar-lg">
-              {initials}
-            </div>
-            <div>
-              <p className="text-tiny font-semibold text-primary-600 uppercase tracking-[0.2em] mb-1">
-                Mon compte
-              </p>
-              <h1 className="text-display text-neutral-900 dark:text-white">
-                {user?.first_name} {user?.last_name}
-              </h1>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">{user?.email}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ Contenu — fond gris ═══ */}
-      <section className="py-12 bg-neutral-150 dark:bg-neutral-800">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Sidebar avec items actifs stylés */}
-            <div className="lg:col-span-1">
-              <div className="card-static dark:bg-neutral-900 dark:border-neutral-700 p-4 space-y-2 sticky top-24">
-                {sidebarItems.map((item) => {
-                  const isActive = item.end
-                    ? location.pathname === item.href
-                    : location.pathname.startsWith(item.href);
-                  const Icon = item.icon;
-                  
-                  return (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className={isActive ? 'sidebar-item-active dark:bg-primary-900/20 dark:text-primary-400 dark:border-primary-800' : 'sidebar-item dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white'}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-
-                <div className="divider dark:border-neutral-700 my-4" />
-
-                <button
-                  onClick={logout}
-                  className="sidebar-item dark:text-neutral-400 dark:hover:bg-neutral-800 w-full text-red-600 hover:bg-red-50 hover:text-red-700"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Deconnexion</span>
-                </button>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Sidebar */}
+        <div className="md:col-span-1">
+          <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <User className="h-10 w-10 text-purple-600" />
               </div>
+              <h2 className="font-semibold text-lg">
+                {user.first_name} {user.last_name}
+              </h2>
+              <p className="text-sm text-gray-600">{user.email}</p>
             </div>
 
-            {/* Contenu principal */}
-            <div className="lg:col-span-3">
-              <Outlet />
-            </div>
+            <nav className="space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = item.end
+                  ? location.pathname === item.to
+                  : location.pathname.startsWith(item.to);
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-purple-50 text-purple-700 font-medium'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <button
+              onClick={() => logoutMutation.mutate()}
+              className="w-full flex items-center gap-3 px-4 py-3 mt-6 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+              Déconnexion
+            </button>
           </div>
         </div>
-      </section>
+
+        {/* Content — Outlet pour les sous-routes */}
+        <div className="md:col-span-3">
+          <Outlet />
+        </div>
+      </div>
     </div>
   );
 }
 
-// ═══ ProfileIndexContent — Informations personnelles ═══
+// ============================================================
+// PROFILE INDEX — Contenu par défaut de /profil
+// ============================================================
 export function ProfileIndexContent() {
-  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
+    first_name: '',
+    last_name: '',
+    telephone: '',
   });
 
-  const initials = user?.first_name && user?.last_name
-    ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
-    : 'U';
+  const { data: user } = useQuery<UserData>({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const response = await apiClient.get('/auth/me/');
+      return response.data;
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      await apiClient.put('/auth/me/', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      setIsEditing(false);
+    },
+  });
+
+  if (!user) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateMutation.mutate(formData);
+  };
 
   return (
-    <div className="card-static dark:bg-neutral-900 dark:border-neutral-700 p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-title text-neutral-900 dark:text-white">Informations personnelles</h2>
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Informations personnelles</h2>
         {!isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="btn-secondary dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800 text-sm"
-          >
+          <Button variant="outline" onClick={() => setIsEditing(true)}>
             Modifier
-          </button>
+          </Button>
         )}
       </div>
 
-      <div className="space-y-6">
-        {/* Avatar + nom */}
-        <div className="flex items-center gap-4 pb-6 border-b border-neutral-100 dark:border-neutral-700">
-          <div className="avatar-lg">
-            {initials}
-          </div>
-          <div>
-            <p className="text-base font-medium text-neutral-900 dark:text-white">
-              {user?.first_name} {user?.last_name}
-            </p>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">{user?.email}</p>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Prénom"
+            value={isEditing ? formData.first_name : user.first_name}
+            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+            disabled={!isEditing}
+          />
+          <Input
+            label="Nom"
+            value={isEditing ? formData.last_name : user.last_name}
+            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+            disabled={!isEditing}
+          />
         </div>
 
-        {/* Champs avec meilleur espacement */}
-        <div className="space-y-5">
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Prenom
-            </label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                className="input dark:bg-neutral-800 dark:border-neutral-700 dark:text-white"
-              />
-            ) : (
-              <p className="text-sm text-neutral-900 dark:text-white py-3 px-4 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-100 dark:border-neutral-700">
-                {user?.first_name || '—'}
-              </p>
-            )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+            <Mail className="h-5 w-5 text-gray-500" />
+            <span className="text-gray-700">{user.email}</span>
           </div>
-
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Nom
-            </label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                className="input dark:bg-neutral-800 dark:border-neutral-700 dark:text-white"
-              />
-            ) : (
-              <p className="text-sm text-neutral-900 dark:text-white py-3 px-4 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-100 dark:border-neutral-700">
-                {user?.last_name || '—'}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Email
-            </label>
-            <p className="text-sm text-neutral-900 dark:text-white py-3 px-4 bg-neutral-50 dark:bg-neutral-800 rounded-xl border border-neutral-100 dark:border-neutral-700">
-              {user?.email}
-            </p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2">
-              L'email ne peut pas etre modifie
-            </p>
-          </div>
+          <p className="text-xs text-gray-500 mt-1">L'email ne peut pas être modifié</p>
         </div>
 
-        {/* Boutons d'édition */}
+        {/* <Input
+          label="Téléphone"
+          type="tel"
+          value={isEditing ? formData.telephone : user.telephone || ''}
+          onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+          disabled={!isEditing}
+          placeholder="+229 XX XX XX XX"
+        /> */}
+
         {isEditing && (
-          <div className="flex gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-700">
-            <button className="btn-primary">
-              Enregistrer
-            </button>
-            <button
-              onClick={() => setIsEditing(false)}
-              className="btn-secondary dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
-            >
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
               Annuler
-            </button>
+            </Button>
           </div>
         )}
-      </div>
+      </form>
     </div>
   );
 }
