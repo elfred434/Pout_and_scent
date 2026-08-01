@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
+import {
   Users,
   Shield,
   User,
@@ -13,6 +13,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { apiClient } from '@/api/client';
+import { Select } from '@/components/common/Select';
 
 export function AdminUsersPage() {
   const queryClient = useQueryClient();
@@ -22,12 +23,12 @@ export function AdminUsersPage() {
 
   const { data: usersData, isLoading } = useQuery({
     queryKey: ['admin-users', search, roleFilter],
-    queryFn: () => apiClient.get('/v1/users/', { 
-      params: { 
+    queryFn: () => apiClient.get('/v1/users/', {
+      params: {
         search: search || undefined,
         role: roleFilter || undefined,
-        page_size: 50 
-      } 
+        page_size: 50
+      }
     }).then(r => r.data),
   });
 
@@ -50,20 +51,17 @@ export function AdminUsersPage() {
       </div>
 
       {/* Filtres */}
-      <div className="bg-white rounded-xl shadow-sm p-4 border border-neutral-200">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
-            <input type="text" placeholder="Rechercher par email, prénom, nom..." value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500" />
+      <div className="surface p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+            <input type="text" placeholder="Rechercher par email, prénom, nom..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-search" />
           </div>
-          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+          <Select aria-label="Filtrer par rôle" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="sm:w-48">
             <option value="">Tous les rôles</option>
             <option value="CLIENT">Clients</option>
             <option value="ADMIN">Admins</option>
-          </select>
+          </Select>
         </div>
       </div>
 
@@ -82,12 +80,12 @@ export function AdminUsersPage() {
             {users.map((u: any) => (
               <button key={u.id} onClick={() => setSelectedUser(u)}
                 className="w-full p-4 hover:bg-neutral-50 transition-colors text-left">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       u.role === 'ADMIN' ? 'bg-primary-100' : 'bg-neutral-100'
                     }`}>
-                      {u.role === 'ADMIN' 
+                      {u.role === 'ADMIN'
                         ? <Shield className="h-5 w-5 text-primary-600" />
                         : <User className="h-5 w-5 text-neutral-600" />
                       }
@@ -96,7 +94,7 @@ export function AdminUsersPage() {
                       <h3 className="font-semibold text-neutral-900">
                         {u.full_name || u.email}
                       </h3>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
                         <span className="flex items-center gap-1">
                           <Mail className="h-3 w-3" /> {u.email}
                         </span>
@@ -114,7 +112,7 @@ export function AdminUsersPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right text-sm text-neutral-500">
+                  <div className="text-left text-sm text-neutral-500 sm:text-right">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {u.date_joined ? new Date(u.date_joined).toLocaleDateString('fr-FR') : 'N/A'}
@@ -136,7 +134,7 @@ export function AdminUsersPage() {
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
                   selectedUser.role === 'ADMIN' ? 'bg-primary-100' : 'bg-neutral-100'
                 }`}>
-                  {selectedUser.role === 'ADMIN' 
+                  {selectedUser.role === 'ADMIN'
                     ? <Shield className="h-7 w-7 text-primary-600" />
                     : <User className="h-7 w-7 text-neutral-600" />
                   }
@@ -148,7 +146,7 @@ export function AdminUsersPage() {
               </div>
             </div>
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="form-grid">
                 <div>
                   <p className="text-xs text-neutral-500">Rôle</p>
                   <p className="font-medium">{selectedUser.role}</p>
@@ -175,10 +173,10 @@ export function AdminUsersPage() {
                     toggleActive.mutate({ id: selectedUser.id, active: !selectedUser.is_active });
                     setSelectedUser({ ...selectedUser, is_active: !selectedUser.is_active });
                   }}
-                  className={`w-full py-2 rounded-lg font-medium transition-colors ${
-                    selectedUser.is_active 
-                      ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                      : 'bg-green-50 text-green-600 hover:bg-green-100'
+                  className={`btn-base w-full ${
+                    selectedUser.is_active
+                      ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/40'
+                      : 'bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-950/40'
                   }`}
                 >
                   {selectedUser.is_active ? 'Désactiver le compte' : 'Réactiver le compte'}

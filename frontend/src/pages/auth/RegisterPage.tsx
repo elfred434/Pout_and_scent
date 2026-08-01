@@ -36,11 +36,11 @@ export function RegisterPage() {
     try {
       setGlobalError('');
       console.log('✅ Google credential received');
-      
+
       await googleLogin.mutateAsync({
         credential: credentialResponse.credential,
       });
-      
+
       navigate('/');
     } catch (err: any) {
       console.error('❌ Google login error:', err);
@@ -84,7 +84,7 @@ export function RegisterPage() {
 
         if (errorData.error) {
           const formattedErrors: Record<string, string[]> = {};
-          
+
           if (typeof errorData.error === 'object') {
             Object.entries(errorData.error).forEach(([key, value]) => {
               if (Array.isArray(value)) {
@@ -96,7 +96,7 @@ export function RegisterPage() {
           } else if (typeof errorData.error === 'string') {
             setGlobalError(errorData.error);
           }
-          
+
           setErrors(formattedErrors);
         } else {
           const formattedErrors: Record<string, string[]> = {};
@@ -118,13 +118,13 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-[calc(100dvh-4rem)] flex items-start justify-center bg-neutral-50 px-4 py-8 sm:items-center sm:px-6 sm:py-12 lg:px-8 dark:bg-neutral-950">
+      <div className="card-static max-w-md w-full space-y-8 p-6 sm:p-8">
         <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">
+          <h2 className="text-center text-3xl font-bold text-neutral-900">
             Créer un compte
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-neutral-600">
             Ou{' '}
             <Link
               to="/connexion"
@@ -158,10 +158,10 @@ export function RegisterPage() {
         {/* Séparateur */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full border-t border-neutral-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">
+            <span className="px-2 bg-neutral-50 text-neutral-500">
               Ou avec email
             </span>
           </div>
@@ -169,22 +169,24 @@ export function RegisterPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <Input
-              label="Prénom"
-              type="text"
-              value={formData.first_name}
-              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-              required
-              error={errors.first_name?.[0]}
-            />
-            <Input
-              label="Nom"
-              type="text"
-              value={formData.last_name}
-              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-              required
-              error={errors.last_name?.[0]}
-            />
+            <div className="form-grid">
+              <Input
+                label="Prénom"
+                type="text"
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                required
+                error={errors.first_name?.[0]}
+              />
+              <Input
+                label="Nom"
+                type="text"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                required
+                error={errors.last_name?.[0]}
+              />
+            </div>
             <Input
               label="Email"
               type="email"

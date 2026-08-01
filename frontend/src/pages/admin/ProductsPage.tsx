@@ -8,7 +8,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
-import { 
+import { Select } from '@/components/common/Select';
+import { Textarea } from '@/components/common/Textarea';
+import {
   Plus, Search, Edit2, Trash2, Package, Upload, X, Image as ImageIcon,
   Droplets, Shield, Eye, FileText, Star
 } from 'lucide-react';
@@ -79,7 +81,7 @@ export function AdminProductsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
           <input type="text" placeholder="Rechercher..." value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500" />
+            className="input-search" />
         </div>
       </div>
 
@@ -96,7 +98,7 @@ export function AdminProductsPage() {
           <div className="divide-y divide-neutral-200">
             {products.map((p: any) => (
               <div key={p.id} className="p-4 hover:bg-neutral-50 transition-colors">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                   <div className="w-16 h-16 bg-neutral-100 rounded-lg overflow-hidden flex-shrink-0">
                     {p.images?.[0]?.image
                       ? <img src={p.images[0].image} alt={p.nom} className="w-full h-full object-cover" />
@@ -115,11 +117,9 @@ export function AdminProductsPage() {
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => { setEditingProduct(p); setShowForm(true); }}
-                      className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Edit2 className="h-5 w-5" /></button>
-                    <button onClick={() => { if (confirm('Supprimer ?')) deleteMutation.mutate(p.id); }}
-                      className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="h-5 w-5" /></button>
+                  <div className="flex items-center gap-2 sm:ml-auto">
+                    <button onClick={() => { setEditingProduct(p); setShowForm(true); }} className="icon-btn hover:!text-primary-600" aria-label={`Modifier ${p.nom}`}><Edit2 className="h-5 w-5" /></button>
+                    <button onClick={() => { if (confirm('Supprimer ?')) deleteMutation.mutate(p.id); }} className="icon-btn hover:!bg-red-50 hover:!text-red-600 dark:hover:!bg-red-950/40" aria-label={`Supprimer ${p.nom}`}><Trash2 className="h-5 w-5" /></button>
                   </div>
                 </div>
               </div>
@@ -146,6 +146,15 @@ export function AdminProductsPage() {
 // ═══════════════════════════════════════════════════════════════
 // FORMULAIRE PRODUIT COMPLET (reproduit le Django Admin)
 // ═══════════════════════════════════════════════════════════════
+interface EditableVariant {
+  id: string | null;
+  contenance_ml: number | string;
+  prix: number | string;
+  stock: number | string;
+  sku: string;
+  is_active: boolean;
+}
+
 function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, isSubmitting, onCreated }: {
   product: any; categories: any[]; onClose: () => void;
   onSubmit: (data: any) => void; onDelete: (id: string) => void;
@@ -169,8 +178,8 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
   const [numeroLot, setNumeroLot] = useState(product?.numero_lot || '');
 
   // ─── State variantes ───
-  const [variantes, setVariantes] = useState(
-    product?.variantes?.map((v: any) => ({
+  const [variantes, setVariantes] = useState<EditableVariant[]>(
+    product?.variantes?.map((v: any): EditableVariant => ({
       id: v.id, contenance_ml: v.contenance_ml, prix: v.prix, stock: v.stock, sku: v.sku || '', is_active: v.is_active,
     })) || [{ id: null, contenance_ml: '', prix: '', stock: 0, sku: '', is_active: true }]
   );
@@ -204,8 +213,8 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
 
   const deleteImage = useMutation({
     mutationFn: (imageId: string) => apiClient.delete(`/v1/catalog/images/${imageId}/`),
-    onSuccess: () => {
-      setImages(images.filter((img: any) => img.id !== imageId));
+    onSuccess: (_response, imageId) => {
+      setImages((currentImages: any[]) => currentImages.filter((img: any) => img.id !== imageId));
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
@@ -256,11 +265,10 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
             {isEditing && <p className="text-sm text-neutral-500">{marque} — {nom}</p>}
           </div>
           <div className="flex items-center gap-2">
-            <button type="submit" form="product-form" disabled={isSubmitting}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm font-medium">
+            <button type="submit" form="product-form" disabled={isSubmitting} className="btn-primary hidden sm:inline-flex">
               {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
             </button>
-            <button type="button" onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-lg"><X className="h-5 w-5" /></button>
+            <button type="button" onClick={onClose} className="icon-btn" aria-label="Fermer la fenêtre"><X className="h-5 w-5" /></button>
           </div>
         </div>
 
@@ -275,23 +283,18 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
               <Input label="Marque *" value={marque} onChange={e => setMarque(e.target.value)} required />
             </div>
             <div className="mt-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Catégorie *</label>
-              <select value={categorieId} onChange={e => setCategorieId(e.target.value)} required
-                className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+              <Select label="Catégorie *" value={categorieId} onChange={e => setCategorieId(e.target.value)} required>
                 <option value="">Sélectionner</option>
                 {categories.map((c: any) => <option key={c.id} value={c.id}>{c.nom} ({c.type})</option>)}
-              </select>
+              </Select>
             </div>
             <div className="mt-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Description</label>
-              <textarea value={description} onChange={e => setDescription(e.target.value)}
-                className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500" rows={4} />
+              <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={4} />
             </div>
             {product?.slug && (
               <div className="mt-4">
-                <label className="block text-sm font-medium text-neutral-500 mb-1">Slug (auto)</label>
-                <input type="text" value={product.slug} readOnly
-                  className="w-full px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-neutral-500" />
+                <label className="form-label">Slug (auto)</label>
+                <input type="text" value={product.slug} readOnly className="input bg-neutral-100 text-neutral-500 dark:bg-neutral-800" />
               </div>
             )}
           </section>
@@ -313,9 +316,7 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
               <Input label="Numéro de lot" value={numeroLot} onChange={e => setNumeroLot(e.target.value)} />
             </div>
             <div className="mt-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Liste INCI</label>
-              <textarea value={listeInci} onChange={e => setListeInci(e.target.value)} placeholder="Liste complète des ingrédients (nomenclature INCI)"
-                className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm" rows={3} />
+              <Textarea label="Liste INCI" value={listeInci} onChange={e => setListeInci(e.target.value)} placeholder="Liste complète des ingrédients (nomenclature INCI)" rows={3} />
             </div>
           </section>
 
@@ -324,15 +325,13 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
             <h3 className="text-lg font-semibold text-primary-700 border-b border-primary-200 pb-2 mb-4 flex items-center gap-2">
               <Eye className="h-5 w-5" /> Visibilité
             </h3>
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)}
-                  className="w-4 h-4 text-primary-600 rounded" />
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
+              <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                <input type="checkbox" checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)} className="check-control" />
                 <span className="text-sm text-neutral-700 flex items-center gap-1"><Star className="h-4 w-4" /> Mis en avant</span>
               </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)}
-                  className="w-4 h-4 text-primary-600 rounded" />
+              <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="check-control" />
                 <span className="text-sm text-neutral-700">Est actif</span>
               </label>
             </div>
@@ -344,47 +343,59 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
               <h3 className="text-lg font-semibold text-primary-700 flex items-center gap-2">
                 <Droplets className="h-5 w-5" /> Variantes
               </h3>
-              <button type="button" onClick={addVariante}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100">
+              <button type="button" onClick={addVariante} className="btn-secondary !min-h-11 !px-4 !py-2">
                 <Plus className="h-4 w-4" /> Ajouter
               </button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            {/* Mobile: cards are easier to edit than a horizontally scrolling table. */}
+            <div className="space-y-3 md:hidden">
+              {variantes.map((v, i) => (
+                <div key={i} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/60">
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-neutral-900 dark:text-white">Variante {i + 1}</p>
+                    <button type="button" onClick={() => removeVariante(i)} disabled={variantes.length <= 1} className="icon-btn hover:!bg-red-50 hover:!text-red-600 dark:hover:!bg-red-950/40" aria-label={`Supprimer la variante ${i + 1}`}>
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="form-grid">
+                    <Input label="Contenance (ml)" type="number" value={v.contenance_ml} onChange={e => updateVariante(i, 'contenance_ml', e.target.value)} placeholder="100" />
+                    <Input label="Prix (FCFA)" type="number" value={v.prix} onChange={e => updateVariante(i, 'prix', e.target.value)} placeholder="15000" />
+                    <Input label="Stock" type="number" value={v.stock} onChange={e => updateVariante(i, 'stock', e.target.value)} placeholder="0" />
+                    <div>
+                      <p className="form-label">SKU</p>
+                      <p className="flex min-h-12 items-center rounded-xl border border-neutral-200 bg-white px-4 font-mono text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900">{v.sku || 'Généré automatiquement'}</p>
+                    </div>
+                  </div>
+                  <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-3">
+                    <input type="checkbox" checked={v.is_active} onChange={e => updateVariante(i, 'is_active', e.target.checked)} className="check-control" />
+                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Variante active</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            {/* Tablet / desktop: compact table. */}
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[680px] text-sm">
                 <thead>
-                  <tr className="bg-neutral-50">
-                    <th className="text-left px-3 py-2 font-medium text-neutral-600">Contenance (ml)</th>
-                    <th className="text-left px-3 py-2 font-medium text-neutral-600">Prix (FCFA)</th>
-                    <th className="text-left px-3 py-2 font-medium text-neutral-600">Stock</th>
-                    <th className="text-left px-3 py-2 font-medium text-neutral-600">SKU</th>
-                    <th className="text-center px-3 py-2 font-medium text-neutral-600">Actif</th>
-                    <th className="text-center px-3 py-2 font-medium text-neutral-600">Suppr.</th>
+                  <tr className="bg-neutral-50 dark:bg-neutral-800">
+                    <th className="px-3 py-3 text-left font-medium text-neutral-600">Contenance (ml)</th>
+                    <th className="px-3 py-3 text-left font-medium text-neutral-600">Prix (FCFA)</th>
+                    <th className="px-3 py-3 text-left font-medium text-neutral-600">Stock</th>
+                    <th className="px-3 py-3 text-left font-medium text-neutral-600">SKU</th>
+                    <th className="px-3 py-3 text-center font-medium text-neutral-600">Actif</th>
+                    <th className="px-3 py-3 text-center font-medium text-neutral-600">Suppr.</th>
                   </tr>
                 </thead>
                 <tbody>
                   {variantes.map((v, i) => (
-                    <tr key={i} className="border-t border-neutral-100">
-                      <td className="px-3 py-2">
-                        <input type="number" value={v.contenance_ml} onChange={e => updateVariante(i, 'contenance_ml', e.target.value)}
-                          className="w-24 px-2 py-1 border border-neutral-200 rounded text-sm" placeholder="100" />
-                      </td>
-                      <td className="px-3 py-2">
-                        <input type="number" value={v.prix} onChange={e => updateVariante(i, 'prix', e.target.value)}
-                          className="w-28 px-2 py-1 border border-neutral-200 rounded text-sm" placeholder="15000" />
-                      </td>
-                      <td className="px-3 py-2">
-                        <input type="number" value={v.stock} onChange={e => updateVariante(i, 'stock', e.target.value)}
-                          className="w-20 px-2 py-1 border border-neutral-200 rounded text-sm" placeholder="0" />
-                      </td>
-                      <td className="px-3 py-2 text-neutral-500 text-xs font-mono">{v.sku || '—'}</td>
-                      <td className="px-3 py-2 text-center">
-                        <input type="checkbox" checked={v.is_active} onChange={e => updateVariante(i, 'is_active', e.target.checked)}
-                          className="w-4 h-4 text-primary-600 rounded" />
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <button type="button" onClick={() => removeVariante(i)} disabled={variantes.length <= 1}
-                          className="text-red-400 hover:text-red-600 disabled:opacity-30"><Trash2 className="h-4 w-4" /></button>
-                      </td>
+                    <tr key={i} className="border-t border-neutral-200 dark:border-neutral-700">
+                      <td className="px-3 py-2"><input type="number" value={v.contenance_ml} onChange={e => updateVariante(i, 'contenance_ml', e.target.value)} className="input !min-h-11 w-28 !px-3 !py-2" placeholder="100" /></td>
+                      <td className="px-3 py-2"><input type="number" value={v.prix} onChange={e => updateVariante(i, 'prix', e.target.value)} className="input !min-h-11 w-32 !px-3 !py-2" placeholder="15000" /></td>
+                      <td className="px-3 py-2"><input type="number" value={v.stock} onChange={e => updateVariante(i, 'stock', e.target.value)} className="input !min-h-11 w-24 !px-3 !py-2" placeholder="0" /></td>
+                      <td className="px-3 py-2 font-mono text-xs text-neutral-500">{v.sku || '—'}</td>
+                      <td className="px-3 py-2 text-center"><input type="checkbox" checked={v.is_active} onChange={e => updateVariante(i, 'is_active', e.target.checked)} className="check-control" /></td>
+                      <td className="px-3 py-2 text-center"><button type="button" onClick={() => removeVariante(i)} disabled={variantes.length <= 1} className="icon-btn hover:!text-red-600" aria-label={`Supprimer la variante ${i + 1}`}><Trash2 className="h-4 w-4" /></button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -406,19 +417,17 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
                       {img.is_primary && (
                         <span className="absolute top-1 left-1 text-xs bg-primary-600 text-white px-2 py-0.5 rounded">Principal</span>
                       )}
-                      <button type="button" onClick={() => deleteImage.mutate(img.id)}
-                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="h-3 w-3" />
+                      <button type="button" onClick={() => deleteImage.mutate(img.id)} className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100" aria-label="Supprimer l’image">
+                        <X className="h-4 w-4" />
                       </button>
                       <div className="p-2 text-xs text-neutral-500">Ordre: {img.ordre}</div>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                 <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
-                <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 text-sm">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="btn-secondary w-full sm:w-auto">
                   <Upload className="h-4 w-4" /> Choisir un fichier
                 </button>
                 {uploadImage.isPending && <span className="text-sm text-neutral-500">Upload en cours...</span>}
@@ -427,16 +436,15 @@ function ProductFormModal({ product, categories, onClose, onSubmit, onDelete, is
           )}
 
           {/* ═══ ACTIONS ═══ */}
-          <div className="flex items-center justify-between pt-6 border-t border-neutral-200">
-            <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 border-t border-neutral-200 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-neutral-700">
+            <div className="form-actions !pt-0 sm:flex-row">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
             </div>
             {isEditing && (
-              <button type="button" onClick={() => { if (confirm('Supprimer ce produit ?')) { onDelete(product.id); onClose(); } }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+              <button type="button" onClick={() => { if (confirm('Supprimer ce produit ?')) { onDelete(product.id); onClose(); } }} className="btn-base w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto">
                 Supprimer
               </button>
             )}

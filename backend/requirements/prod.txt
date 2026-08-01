@@ -15,3 +15,4 @@ dj-database-url==2.3.0
 # Pas de Cloudinary (FileSystemStorage gratuit)
 # Pas de Sentry (optionnel)
 # Pas de Redis (LocMemCache gratuit)
+google-auth

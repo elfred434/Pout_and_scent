@@ -64,19 +64,19 @@ export function TwoFactorPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+    <div className="min-h-[calc(100dvh-4rem)] flex items-start justify-center bg-neutral-50 px-4 py-8 sm:items-center sm:px-6 sm:py-12 lg:px-8 dark:bg-neutral-950">
+      <div className="card-static max-w-md w-full space-y-8 p-6 sm:p-8">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-purple-100">
+          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100">
             <FontAwesomeIcon
               icon={faShieldAlt}
-              className="h-8 w-8 text-purple-600"
+              className="h-8 w-8 text-primary-600"
             />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-neutral-900">
             Vérification 2FA
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-neutral-600">
             Entrez le code à 6 chiffres de votre application d'authentification
           </p>
         </div>
@@ -91,13 +91,14 @@ export function TwoFactorPage() {
           <div>
             <label
               htmlFor="otp_code"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-neutral-700 mb-2"
             >
               Code OTP
             </label>
             <Input
               id="otp_code"
               type="text"
+              inputMode="numeric"
               placeholder="123456"
               value={otpCode}
               onChange={(e) => setOtpCode(e.target.value)}

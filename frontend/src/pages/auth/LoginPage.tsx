@@ -37,25 +37,25 @@ export function LoginPage() {
     try {
       setError('');
       console.log('✅ Google credential received');
-      
+
       await googleLogin.mutateAsync({
         credential: credentialResponse.credential,
       });
-      
+
       navigate(from, { replace: true });
     } catch (err: any) {
       console.error('❌ Google login error:', err);
-      
+
       // ✅ CORRECTION : Extraire le message correctement
       let errorMessage = 'Erreur lors de la connexion avec Google';
-      
+
       if (err.response?.data) {
         const data = err.response.data;
-        
+
         // Structure custom du backend : {success: false, error: {code, message, details}}
         if (data.error?.message) {
           errorMessage = data.error.message;
-        } 
+        }
         // Structure DRF standard : {detail: "..."}
         else if (data.detail) {
           errorMessage = data.detail;
@@ -67,7 +67,7 @@ export function LoginPage() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     }
   };
@@ -100,10 +100,10 @@ export function LoginPage() {
 
       // ✅ CORRECTION : Extraire le message correctement
       let errorMessage = 'Email ou mot de passe incorrect';
-      
+
       if (err.response?.data) {
         const data = err.response.data;
-        
+
         // Structure custom du backend : {success: false, error: {code, message, details}}
         if (data.error?.message) {
           errorMessage = data.error.message;
@@ -123,19 +123,19 @@ export function LoginPage() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-[calc(100dvh-4rem)] flex items-start justify-center bg-neutral-50 px-4 py-8 sm:items-center sm:px-6 sm:py-12 lg:px-8 dark:bg-neutral-950">
+      <div className="card-static max-w-md w-full space-y-8 p-6 sm:p-8">
         <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">
+          <h2 className="text-center text-3xl font-bold text-neutral-900">
             Connexion
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-neutral-600">
             Ou{' '}
             <Link
               to="/inscription"
@@ -169,10 +169,10 @@ export function LoginPage() {
         {/* Séparateur */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full border-t border-neutral-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 text-gray-500">
+            <span className="px-2 bg-neutral-50 text-neutral-500">
               Ou avec email
             </span>
           </div>
@@ -198,15 +198,15 @@ export function LoginPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center cursor-pointer">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <label className="flex min-h-11 cursor-pointer items-center">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="check-control"
               />
-              <span className="ml-2 block text-sm text-gray-700">
+              <span className="ml-2 block text-sm text-neutral-700">
                 Se souvenir de moi
               </span>
             </label>

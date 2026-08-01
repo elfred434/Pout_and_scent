@@ -4,6 +4,7 @@ import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useActivePromotions } from '@/hooks/usePromotions';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ProductSkeleton } from '@/components/products/ProductSkeleton';
+import { Select } from '@/components/common/Select';
 
 export function CatalogPage() {
   const [search, setSearch] = useState('');
@@ -60,7 +61,7 @@ export function CatalogPage() {
               Notre <span className="text-primary-600">Catalogue</span>
             </h1>
             <p className="text-body text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-              Explorez notre collection de parfums et cosmetiques de qualite
+              Explorez notre collection de parfums et cosmétiques de qualité
             </p>
           </div>
         </div>
@@ -83,37 +84,31 @@ export function CatalogPage() {
             </div>
 
             {/* Filtres avec style soigné */}
-            <div className="flex gap-3">
-              <select
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-auto">
+              <Select
+                aria-label="Filtrer par catégorie"
                 value={categorie}
                 onChange={(e) => { setCategorie(e.target.value); setPage(1); }}
-                className="select w-full md:w-48 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
               >
-                <option value="">Toutes categories</option>
+                <option value="">Toutes catégories</option>
                 {categories?.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.nom}
-                  </option>
+                  <option key={cat.id} value={cat.id}>{cat.nom}</option>
                 ))}
-              </select>
+              </Select>
 
-              <select
-                value={ordering}
-                onChange={(e) => setOrdering(e.target.value)}
-                className="select w-full md:w-48 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
-              >
-                <option value="-created_at">Plus recents</option>
+              <Select aria-label="Trier les produits" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
+                <option value="-created_at">Plus récents</option>
                 <option value="prix">Prix croissant</option>
-                <option value="-prix">Prix decroissant</option>
+                <option value="-prix">Prix décroissant</option>
                 <option value="-note_moyenne">Meilleures notes</option>
-              </select>
+              </Select>
             </div>
           </div>
 
           {/* Compteur de résultats */}
           {!isLoading && (
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-4">
-              {totalProducts} produit{totalProducts > 1 ? 's' : ''} trouve{totalProducts > 1 ? 's' : ''}
+              {totalProducts} produit{totalProducts > 1 ? 's' : ''} trouvé{totalProducts > 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -123,18 +118,18 @@ export function CatalogPage() {
       <section className="py-12 bg-white dark:bg-neutral-900">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
             </div>
           ) : products.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
                 {products.map((product) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
+                  <ProductCard
+                    key={product.id}
+                    product={product}
                     promo={getPromoForProduct(product)}
                   />
                 ))}
@@ -148,7 +143,7 @@ export function CatalogPage() {
                     disabled={page === 1}
                     className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
                   >
-                    Precedent
+                    Précédent
                   </button>
                   <span className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">
                     Page {page} sur {totalPages}
@@ -166,7 +161,7 @@ export function CatalogPage() {
           ) : (
             <div className="text-center py-20 space-y-4">
               <SlidersHorizontal className="h-16 w-16 text-neutral-300 dark:text-neutral-600 mx-auto" />
-              <h3 className="text-title text-neutral-900 dark:text-white">Aucun produit trouve</h3>
+              <h3 className="text-title text-neutral-900 dark:text-white">Aucun produit trouvé</h3>
               <p className="text-body text-neutral-600 dark:text-neutral-400 max-w-md mx-auto">
                 Essayez de modifier vos filtres ou votre recherche pour trouver ce que vous cherchez.
               </p>
@@ -174,7 +169,7 @@ export function CatalogPage() {
                 onClick={() => { setSearch(''); setCategorie(''); setOrdering('-created_at'); }}
                 className="btn-secondary dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
               >
-                Reinitialiser les filtres
+                Réinitialiser les filtres
               </button>
             </div>
           )}

@@ -4,6 +4,7 @@ import { ShoppingBag, User, Menu, X, Search, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
 import { useTheme } from '@/contexts/ThemeContext';
+import logoIcon from '@/assets/logo-icon.svg';
 
 const nav = [
   { name: 'Collection', href: '/catalogue' },
@@ -23,9 +24,10 @@ export function Header() {
         <nav className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <span className="text-xl font-semibold tracking-tight text-neutral-900 dark:text-white">
-                Pout<span className="text-primary-600">.</span>Scent
+            <Link to="/" className="flex items-center gap-2.5" aria-label="Pout & Scent — Accueil">
+              <img src={logoIcon} alt="" className="h-9 w-9" />
+              <span className="text-sm font-semibold tracking-[0.12em] text-neutral-900 dark:text-white sm:text-base">
+                POUT <span className="text-primary-600">&amp;</span> SCENT
               </span>
             </Link>
 
@@ -49,21 +51,21 @@ export function Header() {
             {/* Desktop actions */}
             <div className="hidden md:flex items-center gap-4">
               {/* Theme toggle */}
-              <button 
+              <button
                 onClick={toggleTheme}
-                className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
-                aria-label="Toggle theme"
+                className="icon-btn"
+                aria-label={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
               >
                 {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
               </button>
 
-              <button className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
+              <button className="icon-btn" aria-label="Rechercher">
                 <Search className="h-5 w-5" />
               </button>
 
-              <Link 
-                to="/panier" 
-                className="relative p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+              <Link
+                to="/panier"
+                className="icon-btn relative"
               >
                 <ShoppingBag className="h-5 w-5" />
                 {totalItems > 0 && (
@@ -75,23 +77,24 @@ export function Header() {
 
               {isAuthenticated ? (
                 <div className="flex items-center gap-2">
-                  <Link 
-                    to="/profil" 
-                    className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                  <Link
+                    to="/profil"
+                    className="icon-btn"
+                    aria-label="Mon profil"
                   >
                     <User className="h-5 w-5" />
                   </Link>
-                  <button 
+                  <button
                     onClick={logout}
                     className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                   >
-                    Deconnexion
+                    Déconnexion
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <Link 
-                    to="/connexion" 
+                  <Link
+                    to="/connexion"
                     className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                   >
                     Connexion
@@ -106,7 +109,8 @@ export function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setOpen(!open)}
-              className="md:hidden p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+              className="icon-btn md:hidden"
+              aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
             >
               {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -119,7 +123,7 @@ export function Header() {
         <div className="md:hidden fixed inset-0 z-40 bg-white dark:bg-neutral-900 pt-16">
           <div className="px-6 py-8 space-y-6">
             {/* Theme toggle mobile */}
-            <button 
+            <button
               onClick={toggleTheme}
               className="flex items-center gap-3 text-lg text-neutral-900 dark:text-white"
             >
@@ -139,8 +143,8 @@ export function Header() {
             ))}
 
             <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800 space-y-4">
-              <Link 
-                to="/panier" 
+              <Link
+                to="/panier"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-3 text-lg text-neutral-900 dark:text-white"
               >
@@ -155,31 +159,31 @@ export function Header() {
 
               {isAuthenticated ? (
                 <>
-                  <Link 
-                    to="/profil" 
+                  <Link
+                    to="/profil"
                     onClick={() => setOpen(false)}
                     className="block text-lg text-neutral-900 dark:text-white"
                   >
                     Mon compte
                   </Link>
-                  <button 
+                  <button
                     onClick={() => { logout(); setOpen(false); }}
                     className="block text-lg text-red-600"
                   >
-                    Deconnexion
+                    Déconnexion
                   </button>
                 </>
               ) : (
                 <>
-                  <Link 
-                    to="/connexion" 
+                  <Link
+                    to="/connexion"
                     onClick={() => setOpen(false)}
                     className="block text-lg text-neutral-900 dark:text-white"
                   >
                     Connexion
                   </Link>
-                  <Link 
-                    to="/inscription" 
+                  <Link
+                    to="/inscription"
                     onClick={() => setOpen(false)}
                     className="btn-primary w-full text-center"
                   >

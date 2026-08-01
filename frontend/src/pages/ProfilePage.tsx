@@ -7,7 +7,7 @@ const sidebarItems = [
   { name: 'Informations', href: '/profil', icon: User, end: true },
   { name: 'Adresses', href: '/profil/adresses', icon: MapPin },
   { name: 'Commandes', href: '/profil/commandes', icon: ShoppingBag },
-  { name: 'Securite', href: '/profil/securite', icon: Lock },
+  { name: 'Sécurité', href: '/profil/securite', icon: Lock },
 ];
 
 export function ProfilePage() {
@@ -54,7 +54,7 @@ export function ProfilePage() {
                     ? location.pathname === item.href
                     : location.pathname.startsWith(item.href);
                   const Icon = item.icon;
-                  
+
                   return (
                     <Link
                       key={item.href}
@@ -74,7 +74,7 @@ export function ProfilePage() {
                   className="sidebar-item dark:text-neutral-400 dark:hover:bg-neutral-800 w-full text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
                   <LogOut className="h-5 w-5" />
-                  <span>Deconnexion</span>
+                  <span>Déconnexion</span>
                 </button>
               </div>
             </div>
@@ -135,7 +135,7 @@ export function ProfileIndexContent() {
         <div className="space-y-5">
           <div>
             <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Prenom
+              Prénom
             </label>
             {isEditing ? (
               <input
@@ -184,7 +184,7 @@ export function ProfileIndexContent() {
 
         {/* Boutons d'édition */}
         {isEditing && (
-          <div className="flex gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-700">
+          <div className="form-actions border-t border-neutral-200 dark:border-neutral-700">
             <button className="btn-primary">
               Enregistrer
             </button>

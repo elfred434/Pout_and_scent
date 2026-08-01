@@ -8,6 +8,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCategories } from '@/hooks/useProducts';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
+import { Select } from '@/components/common/Select';
+import { Textarea } from '@/components/common/Textarea';
 import { Plus, Edit2, Trash2, FolderOpen, Upload, X } from 'lucide-react';
 import { apiClient } from '@/api/client';
 
@@ -105,7 +107,7 @@ export function AdminCategoriesPage() {
                     <div>
                       <h3 className="font-semibold text-neutral-900">{cat.nom}</h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${cat.type === 'PARFUM' ? 'bg-purple-100 text-purple-700' : 'bg-pink-100 text-pink-700'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${cat.type === 'PARFUM' ? 'bg-primary-100 text-primary-700' : 'bg-accent-100 text-accent-700'}`}>
                           {cat.type}
                         </span>
                         <span className="text-xs text-neutral-500">Slug: {cat.slug}</span>
@@ -114,10 +116,8 @@ export function AdminCategoriesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => { setEditingCategory(cat); setShowForm(true); }}
-                      className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Edit2 className="h-5 w-5" /></button>
-                    <button onClick={() => handleDelete(cat.id)}
-                      className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="h-5 w-5" /></button>
+                    <button onClick={() => { setEditingCategory(cat); setShowForm(true); }} className="icon-btn hover:!text-primary-600" aria-label={`Modifier ${cat.nom}`}><Edit2 className="h-5 w-5" /></button>
+                    <button onClick={() => handleDelete(cat.id)} className="icon-btn hover:!bg-red-50 hover:!text-red-600 dark:hover:!bg-red-950/40" aria-label={`Supprimer ${cat.nom}`}><Trash2 className="h-5 w-5" /></button>
                   </div>
                 </div>
               </div>
@@ -171,29 +171,21 @@ function CategoryFormModal({ category, onClose, onSave, onDelete, isSubmitting }
           <h2 className="text-2xl font-bold text-neutral-900">
             {category ? 'Modification de Catégorie' : 'Nouvelle catégorie'}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-lg"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="icon-btn" aria-label="Fermer la fenêtre"><X className="h-5 w-5" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <Input label="Nom *" value={nom} onChange={e => setNom(e.target.value)} required />
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Type *</label>
-            <select value={type} onChange={e => setType(e.target.value)} required
-              className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500">
-              <option value="PARFUM">Parfum</option>
-              <option value="COSMETIQUE">Cosmétique</option>
-            </select>
-          </div>
+          <Select label="Type *" value={type} onChange={e => setType(e.target.value)} required>
+            <option value="PARFUM">Parfum</option>
+            <option value="COSMETIQUE">Cosmétique</option>
+          </Select>
 
           <Input label="Slug" value={slug} onChange={e => setSlug(e.target.value)}
             placeholder={generateSlug(nom || 'auto-généré')} />
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Description</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500" rows={3} />
-          </div>
+          <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={3} />
 
           {/* Image upload */}
           <div>
@@ -203,19 +195,17 @@ function CategoryFormModal({ category, onClose, onSave, onDelete, isSubmitting }
                 <img src={category.image} alt="" className="h-20 rounded-lg border border-neutral-200" />
               </div>
             )}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <input type="file" ref={fileRef} accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="hidden" />
-              <button type="button" onClick={() => fileRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 text-sm">
+              <button type="button" onClick={() => fileRef.current?.click()} className="btn-secondary w-full sm:w-auto">
                 <Upload className="h-4 w-4" /> Choisir un fichier
               </button>
-              <span className="text-sm text-neutral-500">{imageFile?.name || 'Aucun fichier sélectionné'}</span>
+              <span className="min-w-0 break-all text-sm text-neutral-500 dark:text-neutral-400">{imageFile?.name || 'Aucun fichier sélectionné'}</span>
             </div>
           </div>
 
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)}
-              className="w-4 h-4 text-primary-600 rounded" />
+          <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="check-control" />
             <span className="text-sm text-neutral-700">Est actif</span>
           </label>
 
@@ -226,16 +216,15 @@ function CategoryFormModal({ category, onClose, onSave, onDelete, isSubmitting }
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-4">
-            <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="form-actions !pt-0 sm:flex-row">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
             </div>
             {category?.id && (
-              <button type="button" onClick={() => { onDelete(category.id); onClose(); }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+              <button type="button" onClick={() => { onDelete(category.id); onClose(); }} className="btn-base w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto">
                 Supprimer
               </button>
             )}

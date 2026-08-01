@@ -7,6 +7,8 @@ import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
+import { Select } from '@/components/common/Select';
+import { Textarea } from '@/components/common/Textarea';
 import { toast } from '@/components/common/ToastContainer';
 import { extractApiError } from '@/hooks/useToast';
 import { AlertTriangle, Phone, Shield } from 'lucide-react';
@@ -52,10 +54,10 @@ export function SignalementPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <div className="flex items-center gap-3 mb-6">
-        <Shield className="h-8 w-8 text-purple-600" />
+        <Shield className="h-8 w-8 text-primary-600" />
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Signaler un effet indésirable</h1>
-          <p className="text-gray-600">Obligation réglementaire ABMed — Arrêté du 18 janvier 2022</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Signaler un effet indésirable</h1>
+          <p className="text-neutral-600">Obligation réglementaire ABMed — Arrêté du 18 janvier 2022</p>
         </div>
       </div>
 
@@ -74,7 +76,7 @@ export function SignalementPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="surface space-y-6 p-4 sm:p-6">
         <div>
           <h2 className="text-lg font-semibold mb-4">Produit concerné</h2>
           <Input
@@ -109,41 +111,27 @@ export function SignalementPage() {
 
         <div>
           <h2 className="text-lg font-semibold mb-4">Description de l'effet indésirable</h2>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Gravité *
-            </label>
-            <select
-              value={formData.gravite}
-              onChange={(e) => setFormData({ ...formData, gravite: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="LEGER">Léger — Rougeurs, démangeaisons mineures</option>
-              <option value="MODERE">Modéré — Irritation persistante, gonflement</option>
-              <option value="GRAVE">Grave — Brûlures, lésions cutanées</option>
-              <option value="TRES_GRAVE">Très grave — Hospitalisation, réaction systémique</option>
-            </select>
-          </div>
+          <Select label="Gravité *" value={formData.gravite} onChange={(e) => setFormData({ ...formData, gravite: e.target.value })}>
+            <option value="LEGER">Léger — Rougeurs, démangeaisons mineures</option>
+            <option value="MODERE">Modéré — Irritation persistante, gonflement</option>
+            <option value="GRAVE">Grave — Brûlures, lésions cutanées</option>
+            <option value="TRES_GRAVE">Très grave — Hospitalisation, réaction systémique</option>
+          </Select>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description détaillée * (min. 20 caractères)
-            </label>
-            <textarea
+            <Textarea
+              label="Description détaillée * (min. 20 caractères)"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
               rows={5}
-              placeholder="Décrivez les symptômes, la date d'apparition, la durée, les circonstances d'utilisation..."
+              placeholder="Décrivez les symptômes, la date d'apparition, la durée et les circonstances d'utilisation..."
               required
+              hint={`${formData.description.length}/20 caractères minimum`}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              {formData.description.length}/20 caractères minimum
-            </p>
           </div>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg text-xs text-gray-600">
+        <div className="bg-neutral-50 p-4 rounded-lg text-xs text-neutral-600">
           <p>
             En soumettant ce signalement, vous acceptez que vos données soient transmises
             à l'ABMed (Agence béninoise du Médicament) conformément à l'Arrêté du 18 janvier 2022.

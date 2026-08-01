@@ -74,8 +74,8 @@ export function AdminOrdersPage() {
           <div className="divide-y divide-neutral-200">
             {orders.map((o: any) => (
               <div key={o.id} className="p-4 hover:bg-neutral-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">{getStatusIcon(o.statut)}</div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -86,14 +86,13 @@ export function AdminOrdersPage() {
                       <p className="text-sm text-neutral-500">{o.nb_articles || 0} article(s)</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <p className="text-lg font-bold text-neutral-900">{parseFloat(o.montant_reduit || o.montant_total).toLocaleString('fr-FR')} FCFA</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <button onClick={() => setSelectedOrderId(o.id)}
-                        className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Eye className="h-5 w-5" /></button>
+                      <button onClick={() => setSelectedOrderId(o.id)} className="icon-btn hover:!text-primary-600" aria-label={`Voir la commande ${o.id.slice(0, 8)}`}><Eye className="h-5 w-5" /></button>
                       {nextStatus[o.statut] && (
                         <button onClick={() => transitionMutation.mutate({ id: o.id, statut: nextStatus[o.statut].statut })}
-                          className={`p-2 text-white rounded-lg ${nextStatus[o.statut].color}`} title={nextStatus[o.statut].label}>
+                          className={`flex h-11 w-11 items-center justify-center rounded-xl text-white ${nextStatus[o.statut].color}`} title={nextStatus[o.statut].label} aria-label={nextStatus[o.statut].label}>
                           {(() => { const Icon = nextStatus[o.statut].icon; return <Icon className="h-5 w-5" />; })()}
                         </button>
                       )}
@@ -130,14 +129,14 @@ function OrderDetailModal({ order, onClose, onTransition }: {
             <h2 className="text-2xl font-bold text-neutral-900">Modification de Commande</h2>
             <p className="text-sm text-neutral-500">Commande {order.id} — {order.user_email}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-lg"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="icon-btn" aria-label="Fermer la fenêtre"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-6 space-y-6">
           {/* Statut & Paiement */}
           <section>
             <h3 className="text-lg font-semibold text-primary-700 border-b border-primary-200 pb-2 mb-4">Statut & Paiement</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="form-grid">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">Statut</label>
                 <div className="flex items-center gap-2">
@@ -148,8 +147,7 @@ function OrderDetailModal({ order, onClose, onTransition }: {
                     'bg-red-100 text-red-800'
                   }`}>{order.statut.replace('_', ' ')}</span>
                   {nextStatus[order.statut] && (
-                    <button onClick={() => onTransition(nextStatus[order.statut].statut)}
-                      className="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700">
+                    <button onClick={() => onTransition(nextStatus[order.statut].statut)} className="btn-primary !min-h-11 !px-4 !py-2">
                       {nextStatus[order.statut].label}
                     </button>
                   )}
@@ -165,7 +163,7 @@ function OrderDetailModal({ order, onClose, onTransition }: {
           {/* Notes */}
           <section>
             <h3 className="text-lg font-semibold text-primary-700 border-b border-primary-200 pb-2 mb-4">Notes</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="form-grid">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">Notes client</label>
                 <p className="px-3 py-2 bg-neutral-50 rounded-lg text-sm min-h-[60px]">{order.notes_client || '—'}</p>

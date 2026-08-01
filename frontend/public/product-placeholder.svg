@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800" role="img" aria-label="Produit Pout &amp; Scent">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15101D"/>
+      <stop offset="0.55" stop-color="#34214F"/>
+      <stop offset="1" stop-color="#9A6AF2"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(320 330) rotate(90) scale(330 280)">
+      <stop stop-color="#E6DCFF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#7651B5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="800" fill="url(#bg)"/>
+  <rect width="640" height="800" fill="url(#glow)"/>
+  <g opacity="0.18" stroke="#F5F5F7">
+    <path d="M0 100h640M0 200h640M0 300h640M0 400h640M0 500h640M0 600h640M0 700h640"/>
+    <path d="M80 0v800M160 0v800M240 0v800M320 0v800M400 0v800M480 0v800M560 0v800"/>
+  </g>
+  <g transform="translate(210 185)">
+    <rect x="72" y="0" width="76" height="64" rx="14" fill="#E6DCFF" fill-opacity="0.75"/>
+    <rect x="82" y="58" width="56" height="62" rx="8" fill="#F5F5F7" fill-opacity="0.35" stroke="#F5F5F7" stroke-opacity="0.5"/>
+    <rect x="0" y="110" width="220" height="300" rx="50" fill="#F5F5F7" fill-opacity="0.16" stroke="#F5F5F7" stroke-opacity="0.45" stroke-width="2"/>
+    <rect x="22" y="250" width="176" height="138" rx="32" fill="#D9CCFF" fill-opacity="0.58"/>
+    <rect x="42" y="190" width="136" height="92" rx="18" fill="#FCFAFF" fill-opacity="0.82"/>
+    <text x="110" y="245" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="5" fill="#9842C5">P&amp;S</text>
+  </g>
+  <text x="320" y="680" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="650" letter-spacing="6" fill="#F5F5F7">POUT &amp; SCENT</text>
+  <text x="320" y="714" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, sans-serif" font-size="10" font-weight="500" letter-spacing="4" fill="#E6DCFF">PARFUMS &amp; COSMÉTIQUES</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80" role="img" aria-label="Pout &amp; Scent">
+  <defs>
+    <linearGradient id="violetLavender" x1="8" y1="8" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7651B5"/>
+      <stop offset="0.52" stop-color="#C69CFF"/>
+      <stop offset="1" stop-color="#E6DCFF"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(26 20) rotate(48) scale(63)">
+      <stop stop-color="#F5F5F7" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#F5F1FF" stop-opacity="0.2"/>
+    </radialGradient>
+  </defs>
+  <circle cx="40" cy="40" r="37" fill="url(#glow)" stroke="url(#violetLavender)" stroke-width="1.6"/>
+  <path d="M21 37.5C27 24 35 25 40 29c5-4 13-5 19 8.5-5.7 1.5-12 2.1-19 2.1s-13.3-.6-19-2.1Z" fill="url(#violetLavender)" opacity="0.96"/>
+  <path d="M22 40c5.7.9 11.7 1.4 18 1.4S52.3 40.9 58 40c-5.2 10.3-11.6 15.5-18 15.5S27.2 50.3 22 40Z" fill="url(#violetLavender)" opacity="0.78"/>
+  <path d="M29 65h22" stroke="url(#violetLavender)" stroke-linecap="round" opacity="0.5"/>
+  <circle cx="40" cy="65" r="1.8" fill="#D9CCFF"/>
+</svg>

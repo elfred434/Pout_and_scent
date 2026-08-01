@@ -7,10 +7,10 @@ import { useProducts } from '@/hooks/useProducts';
 import { useOrders } from '@/hooks/useOrders';
 import { useActivePromotions } from '@/hooks/usePromotions';
 import { useState } from 'react';
-import { 
-  Package, 
-  ShoppingCart, 
-  Tag, 
+import {
+  Package,
+  ShoppingCart,
+  Tag,
   Users,
   TrendingUp,
   DollarSign,
@@ -68,7 +68,7 @@ export function DashboardPage() {
         <button
           onClick={handleTestApis}
           disabled={testing}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+          className="btn-base bg-green-600 text-white hover:bg-green-700"
           title="Tester tous les endpoints API"
         >
           <Play className="h-4 w-4" />
@@ -119,8 +119,8 @@ export function DashboardPage() {
         {/* Promotions */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-neutral-200">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Tag className="h-6 w-6 text-purple-600" />
+            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+              <Tag className="h-6 w-6 text-primary-600" />
             </div>
             <TrendingUp className="h-5 w-5 text-green-500" />
           </div>

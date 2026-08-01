@@ -50,7 +50,7 @@ export function ToastContainer() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+    <div className="pointer-events-none fixed left-4 right-4 top-4 z-[100] flex flex-col gap-2 sm:left-auto sm:w-full sm:max-w-sm">
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onDismiss={() => removeGlobalToast(t.id)} />
       ))}
@@ -73,8 +73,8 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
       className={`pointer-events-auto flex items-start gap-3 p-4 rounded-lg border shadow-lg ${bg} animate-slide-up`}
     >
       <Icon className={`h-5 w-5 flex-shrink-0 mt-0.5 ${color}`} />
-      <p className="flex-1 text-sm text-gray-800">{toast.message}</p>
-      <button onClick={onDismiss} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+      <p className="flex-1 text-sm text-neutral-800">{toast.message}</p>
+      <button onClick={onDismiss} className="icon-btn" aria-label="Fermer la notification">
         <X className="h-4 w-4" />
       </button>
     </div>

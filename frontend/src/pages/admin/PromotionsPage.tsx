@@ -9,6 +9,7 @@ import { useActivePromotions } from '@/hooks/usePromotions';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
+import { Select } from '@/components/common/Select';
 import { Plus, Edit2, Trash2, Tag, Percent, DollarSign, Calendar, X } from 'lucide-react';
 import { apiClient } from '@/api/client';
 
@@ -117,10 +118,8 @@ export function AdminPromotionsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => { setEditingPromo(promo); setShowForm(true); }}
-                      className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Edit2 className="h-5 w-5" /></button>
-                    <button onClick={() => handleDelete(promo.id)}
-                      className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="h-5 w-5" /></button>
+                    <button onClick={() => { setEditingPromo(promo); setShowForm(true); }} className="icon-btn hover:!text-primary-600" aria-label={`Modifier ${promo.nom}`}><Edit2 className="h-5 w-5" /></button>
+                    <button onClick={() => handleDelete(promo.id)} className="icon-btn hover:!bg-red-50 hover:!text-red-600 dark:hover:!bg-red-950/40" aria-label={`Supprimer ${promo.nom}`}><Trash2 className="h-5 w-5" /></button>
                   </div>
                 </div>
               </div>
@@ -174,47 +173,35 @@ function PromoFormModal({ promo, products, categories, onClose, onSave, onDelete
           <h2 className="text-2xl font-bold text-neutral-900">
             {promo ? 'Modification de Promotion' : 'Nouvelle promotion'}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-lg"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="icon-btn" aria-label="Fermer la fenêtre"><X className="h-5 w-5" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="form-grid">
             <Input label="Nom *" value={nom} onChange={e => setNom(e.target.value)} required />
             <Input label="Code promo" value={code} onChange={e => setCode(e.target.value)} placeholder="SOLDE20" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Type *</label>
-              <select value={type} onChange={e => setType(e.target.value)}
-                className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500">
-                <option value="POURCENTAGE">Pourcentage (%)</option>
-                <option value="MONTANT_FIXE">Montant fixe (FCFA)</option>
-              </select>
-            </div>
+          <div className="form-grid">
+            <Select label="Type *" value={type} onChange={e => setType(e.target.value)}>
+              <option value="POURCENTAGE">Pourcentage (%)</option>
+              <option value="MONTANT_FIXE">Montant fixe (FCFA)</option>
+            </Select>
             <Input label={type === 'POURCENTAGE' ? 'Pourcentage *' : 'Montant (FCFA) *'}
               type="number" value={valeur} onChange={e => setValeur(e.target.value)} required />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Produit (optionnel)</label>
-            <select value={produit} onChange={e => { setProduit(e.target.value); setCategorie(''); }}
-              className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500">
-              <option value="">Aucun</option>
-              {products.map((p: any) => <option key={p.id} value={p.id}>{p.marque} - {p.nom}</option>)}
-            </select>
-          </div>
+          <Select label="Produit (optionnel)" value={produit} onChange={e => { setProduit(e.target.value); setCategorie(''); }}>
+            <option value="">Aucun</option>
+            {products.map((p: any) => <option key={p.id} value={p.id}>{p.marque} - {p.nom}</option>)}
+          </Select>
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Catégorie (optionnel)</label>
-            <select value={categorie} onChange={e => { setCategorie(e.target.value); setProduit(''); }}
-              className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500">
-              <option value="">Aucune</option>
-              {categories.map((c: any) => <option key={c.id} value={c.id}>{c.nom}</option>)}
-            </select>
-          </div>
+          <Select label="Catégorie (optionnel)" value={categorie} onChange={e => { setCategorie(e.target.value); setProduit(''); }}>
+            <option value="">Aucune</option>
+            {categories.map((c: any) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+          </Select>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="form-grid">
             <Input label="Date début *" type="datetime-local" value={dateDebut}
               onChange={e => setDateDebut(e.target.value)} required />
             <Input label="Date fin *" type="datetime-local" value={dateFin}
@@ -227,16 +214,15 @@ function PromoFormModal({ promo, products, categories, onClose, onSave, onDelete
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-4">
-            <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="form-actions !pt-0 sm:flex-row">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
             </div>
             {promo?.id && (
-              <button type="button" onClick={() => { onDelete(promo.id); onClose(); }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+              <button type="button" onClick={() => { onDelete(promo.id); onClose(); }} className="btn-base w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto">
                 Supprimer
               </button>
             )}

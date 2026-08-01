@@ -54,15 +54,16 @@ export function ProductCard({ product, promo }: ProductCardProps) {
           {/* Wishlist button */}
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center
-                       opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110 shadow-sm"
+            className="absolute top-3 right-3 w-11 h-11 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-sm rounded-full flex items-center justify-center
+                       opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 hover:bg-white dark:hover:bg-neutral-800 hover:scale-105 shadow-sm"
+            aria-label="Ajouter aux favoris"
           >
             <Heart className="h-4 w-4 text-neutral-600" />
           </button>
 
           {/* Bouton "Ajouter au panier" en overlay au hover */}
           {isAvailable && (
-            <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 translate-y-0 md:translate-y-full md:group-hover:translate-y-0 transition-transform duration-300">
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 className="w-full btn-primary py-2.5 text-xs shadow-lg"

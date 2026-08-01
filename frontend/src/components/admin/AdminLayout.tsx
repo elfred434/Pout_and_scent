@@ -5,20 +5,21 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  LayoutDashboard, 
-  Package, 
-  FolderOpen, 
-  ShoppingCart, 
-  Tag, 
-  Star, 
-  MessageSquare, 
+import {
+  LayoutDashboard,
+  Package,
+  FolderOpen,
+  ShoppingCart,
+  Tag,
+  Star,
+  MessageSquare,
   Users,
   LogOut,
   Menu,
   X,
   ChevronDown
 } from 'lucide-react';
+import logoIcon from '@/assets/logo-icon.svg';
 
 const navigation = [
   { name: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
@@ -60,7 +61,7 @@ export function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="admin-shell min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Sidebar mobile */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -68,7 +69,7 @@ export function AdminLayout() {
           <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl">
             <div className="flex items-center justify-between h-16 px-6 border-b border-neutral-200">
               <h2 className="text-lg font-bold text-neutral-900">Administration</h2>
-              <button onClick={() => setSidebarOpen(false)} className="text-neutral-500 hover:text-neutral-700">
+              <button onClick={() => setSidebarOpen(false)} className="icon-btn" aria-label="Fermer le menu">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -101,9 +102,10 @@ export function AdminLayout() {
         {/* Sidebar desktop */}
         <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white border-r border-neutral-200 fixed inset-y-0 left-0">
           <div className="flex items-center h-16 px-6 border-b border-neutral-200">
-            <Link to="/admin" className="flex items-center gap-2">
-              <span className="text-xl font-bold text-neutral-900">
-                Pout<span className="text-primary-600">.</span>Scent
+            <Link to="/admin" className="flex items-center gap-2.5">
+              <img src={logoIcon} alt="" className="h-9 w-9" />
+              <span className="text-sm font-semibold tracking-[0.1em] text-neutral-900 dark:text-white">
+                POUT <span className="text-primary-600">&amp;</span> SCENT
               </span>
             </Link>
           </div>
@@ -166,11 +168,11 @@ export function AdminLayout() {
         <div className="flex-1 lg:ml-64">
           {/* Header mobile */}
           <header className="lg:hidden flex items-center justify-between h-16 px-6 bg-white border-b border-neutral-200">
-            <button onClick={() => setSidebarOpen(true)} className="text-neutral-600 hover:text-neutral-900">
+            <button onClick={() => setSidebarOpen(true)} className="icon-btn" aria-label="Ouvrir le menu">
               <Menu className="h-6 w-6" />
             </button>
             <h2 className="text-lg font-bold text-neutral-900">Administration</h2>
-            <button onClick={handleLogout} className="text-neutral-600 hover:text-red-600">
+            <button onClick={handleLogout} className="icon-btn hover:!text-red-600" aria-label="Déconnexion">
               <LogOut className="h-5 w-5" />
             </button>
           </header>

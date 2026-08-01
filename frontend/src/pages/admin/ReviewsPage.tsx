@@ -4,11 +4,11 @@
  */
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Star, 
-  Eye, 
-  EyeOff, 
-  Trash2, 
+import {
+  Star,
+  Eye,
+  EyeOff,
+  Trash2,
   MessageSquare,
   Search
 } from 'lucide-react';
@@ -51,12 +51,10 @@ export function AdminReviewsPage() {
         <p className="text-neutral-600">{reviewsData?.count || reviews.length} avis au total</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-4 border border-neutral-200">
+      <div className="surface p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
-          <input type="text" placeholder="Rechercher un avis..." value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500" />
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+          <input type="text" placeholder="Rechercher un avis..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-search" />
         </div>
       </div>
 
@@ -73,8 +71,8 @@ export function AdminReviewsPage() {
           <div className="divide-y divide-neutral-200">
             {reviews.map((review: any) => (
               <div key={review.id} className={`p-4 hover:bg-neutral-50 transition-colors ${!review.is_visible ? 'opacity-50' : ''}`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       {renderStars(review.note)}
                       <span className="text-sm font-medium text-neutral-900">{review.user?.email}</span>
@@ -88,17 +86,18 @@ export function AdminReviewsPage() {
                       <span>{new Date(review.created_at).toLocaleDateString('fr-FR')}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center gap-2 sm:ml-4">
                     <button
                       onClick={() => toggleVisibility.mutate({ id: review.id, visible: !review.is_visible })}
-                      className={`p-2 rounded-lg transition-colors ${review.is_visible ? 'text-neutral-600 hover:text-orange-600 hover:bg-orange-50' : 'text-neutral-400 hover:text-green-600 hover:bg-green-50'}`}
-                      title={review.is_visible ? 'Masquer' : 'Afficher'}
+                      className={`icon-btn ${review.is_visible ? 'hover:!bg-orange-50 hover:!text-orange-600' : 'hover:!bg-green-50 hover:!text-green-600'}`}
+                      aria-label={review.is_visible ? 'Masquer l’avis' : 'Afficher l’avis'}
                     >
                       {review.is_visible ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                     <button
                       onClick={() => { if (confirm('Supprimer cet avis ?')) deleteReview.mutate(review.id); }}
-                      className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="icon-btn hover:!bg-red-50 hover:!text-red-600 dark:hover:!bg-red-950/40"
+                      aria-label="Supprimer l’avis"
                     >
                       <Trash2 className="h-5 w-5" />
                     </button>

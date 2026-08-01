@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/common/Button';
-import { 
+import {
   MessageSquare,
   Send,
   UserCheck,
@@ -81,19 +81,19 @@ export function AdminConversationsPage() {
   if (selectedId && selectedConv) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-neutral-100 rounded-lg">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+          <button onClick={() => setSelectedId(null)} className="icon-btn" aria-label="Retour aux conversations">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <h2 className="text-xl font-bold text-neutral-900">{selectedConv.sujet}</h2>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               {getStatusBadge(selectedConv.statut, selectedConv.is_closed)}
               <span className="text-sm text-neutral-500">{selectedConv.client_email}</span>
               <span className="text-sm text-neutral-500">• Priorité: {selectedConv.priorite}</span>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {!selectedConv.is_closed && selectedConv.statut !== 'EN_COURS' && (
               <Button variant="outline" onClick={() => assignAgent.mutate(selectedId)} disabled={assignAgent.isPending}>
                 <UserCheck className="h-4 w-4 mr-1" /> Assigner
@@ -119,8 +119,8 @@ export function AdminConversationsPage() {
           ) : messages.map((msg: any) => (
             <div key={msg.id} className={`flex ${msg.auteur === selectedConv.client ? 'justify-start' : 'justify-end'}`}>
               <div className={`max-w-[70%] rounded-xl px-4 py-2 ${
-                msg.auteur === selectedConv.client 
-                  ? 'bg-neutral-100 text-neutral-900' 
+                msg.auteur === selectedConv.client
+                  ? 'bg-neutral-100 text-neutral-900'
                   : 'bg-primary-600 text-white'
               }`}>
                 <p className="text-xs opacity-70 mb-1">{msg.auteur_email || 'Agent'}</p>
@@ -133,11 +133,12 @@ export function AdminConversationsPage() {
 
         {/* Input */}
         {!selectedConv.is_closed && (
-          <form onSubmit={(e) => { e.preventDefault(); if (newMessage.trim()) sendMessage.mutate(); }}
-            className="flex gap-2">
-            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Écrire un message..." className="flex-1 px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-500" />
-            <Button type="submit" disabled={!newMessage.trim() || sendMessage.isPending}>
+          <form onSubmit={(e) => { e.preventDefault(); if (newMessage.trim()) sendMessage.mutate(); }} className="flex items-end gap-2">
+            <label className="min-w-0 flex-1">
+              <span className="sr-only">Écrire un message</span>
+              <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Écrire un message..." className="input" />
+            </label>
+            <Button type="submit" disabled={!newMessage.trim() || sendMessage.isPending} className="!h-12 !w-12 !min-h-12 !px-0" aria-label="Envoyer le message">
               <Send className="h-4 w-4" />
             </Button>
           </form>
